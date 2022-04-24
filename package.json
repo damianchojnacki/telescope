@@ -20,7 +20,9 @@
   "license": "ISC",
   "dependencies": {
     "@types/uuid": "^8.3.4",
+    "axios": "^0.26.1",
     "express": "^4.17.3",
+    "fetch-intercept": "^2.4.0",
     "lowdb": "^3.0.0",
     "uuid": "^8.3.2"
   },

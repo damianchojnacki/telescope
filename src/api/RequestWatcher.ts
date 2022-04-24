@@ -7,19 +7,18 @@ export type HTTPMethod = "GET" | "HEAD" | "POST" | "PUT" | "PATCH" | "DELETE"
 
 export interface RequestWatcherData
 {
-  uuid: string,
-  time: string,
-  hostname: string,
-  method: HTTPMethod,
-  controllerAction: string,
-  middleware: string,
-  path: string,
-  status: number,
-  duration: number,
-  ipAddress: string,
-  memoryUsage: number,
-  payload: object,
-  headers: IncomingHttpHeaders,
+  hostname: string
+  method: HTTPMethod
+  controllerAction: string
+  middleware: string[]
+  uri: string
+  response_status: number
+  duration: number
+  ip_address: string
+  memory: number
+  payload: object
+  headers: IncomingHttpHeaders
+  session: object
   response: any
 }
 
@@ -60,20 +59,19 @@ export default class RequestWatcher
         const request = this.request;
         
         DB.requests().save({
-            uuid: uuidv4(),
-            time: new Date().toISOString(),
             hostname: request.hostname,
             method: request.method as HTTPMethod,
             controllerAction: '',
-            middleware: '',
-            path: request.path,
-            status: this.response.statusCode,
+            middleware: [],
+            uri: request.path,
+            response_status: this.response.statusCode,
             duration: this.getDurationInMs(),
-            ipAddress: request.ip,
-            memoryUsage: this.getMemoryUsage(),
+            ip_address: request.ip,
+            memory: this.getMemoryUsage(),
             payload: this.getPayload(),
             headers: request.headers,
-            response: this.response.locals.body ?? ''
+            response: this.response.locals.body ?? '',
+            session: {}
         });
     }
 
