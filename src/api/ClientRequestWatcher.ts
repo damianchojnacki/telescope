@@ -1,11 +1,11 @@
-import { dump } from "./DumpWatcher.js";
 import axios, {AxiosRequestConfig, AxiosResponse, AxiosRequestHeaders, Method, AxiosResponseHeaders} from 'axios';
-import DB from "./DB.js";
-import { HTTPMethod } from "./RequestWatcher.js";
-import { IncomingHttpHeaders } from "http";
+import DB, {WatcherEntryCollectionType, WatcherEntryDataType} from "./DB.js";
+import WatcherEntry from "./WatcherEntry.js";
+import {hostname} from "os";
 
 export interface ClientRequestWatcherData
 {
+    hostname: string
     method: Method | string
     uri: string
     headers: AxiosRequestHeaders
@@ -13,6 +13,15 @@ export interface ClientRequestWatcherData
     response_status: number
     response_headers: AxiosResponseHeaders
     response: any
+}
+
+export class ClientRequestEntry extends WatcherEntry<ClientRequestWatcherData>
+{
+    collection = WatcherEntryCollectionType["client-request"]
+
+    constructor(data: ClientRequestWatcherData) {
+        super(WatcherEntryDataType["client-requests"], data);
+    }
 }
 
 export default class ClientRequestWatcher
@@ -77,16 +86,17 @@ export default class ClientRequestWatcher
 
     public save()
     {
-        DB.clientRequests().save({
-            // @ts-ignore
+        const entry = new ClientRequestEntry({
+            hostname: hostname(),
             method: this.request.method?.toUpperCase() ?? '',
             uri: this.request.url ?? '',
-            // @ts-ignore
-            headers: this.request.headers,
+            headers: this.request.headers ?? {},
             payload: this.request.data ?? {},
             response_status: this.response.status,
             response_headers: this.response.headers,
             response: this.isHtmlResponse() ? this.escapeHTML(this.response.data) : this.response.data
         })
+
+        DB.clientRequests().save(entry)
     }
 }

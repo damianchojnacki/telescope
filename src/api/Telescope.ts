@@ -1,14 +1,19 @@
-import { Express } from 'express'
-import DB from './DB.js';
+import {Express} from 'express'
+import DB, {WatcherEntryCollectionType} from './DB.js';
 import express from 'express';
-import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import { unlink, unlinkSync } from 'fs';
-import ClientRequestWatcher from './ClientRequestWatcher.js';
+import ClientRequestWatcher from "./ClientRequestWatcher.js";
 
 export default class Telescope
 {
+    static watcherEntries = [
+        WatcherEntryCollectionType.request,
+        WatcherEntryCollectionType.exception,
+        WatcherEntryCollectionType.dump,
+        WatcherEntryCollectionType['client-request'],
+    ]
+
     app: Express;
 
     public static setup(app: Express) {
@@ -34,9 +39,8 @@ export default class Telescope
         this.app.use('/telescope/app-dark.css', express.static(dir + "app-dark.css"));
         this.app.use('/telescope/favicon.ico', express.static(dir + "favicon.ico"));
 
-        this.app.use('/telescope', express.static(dir + 'index.html'));
-        this.app.use('/telescope/', express.static(dir + 'index.html'));
         this.app.use('/telescope/*', express.static(dir + 'index.html'));
+        this.app.get('/telescope/', (request, response) => response.redirect('/telescope/requests'))
     }
 
     public setUpApi() {
@@ -64,6 +68,14 @@ export default class Telescope
             DB.truncate()
 
             response.send("OK")
+        })
+
+        this.app.get("/telescope/telescope-api/entries", async (request, response) => {
+            const enabled = Telescope.watcherEntries;
+
+            response.json({
+                enabled
+            })
         })
     }
 }

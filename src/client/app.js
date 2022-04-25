@@ -7,7 +7,7 @@ import VueJsonPretty from 'vue-json-pretty';
 import 'vue-json-pretty/lib/styles.css';
 import moment from 'moment-timezone';
 
-//require('bootstrap');
+require('bootstrap');
 
 Vue.use(VueRouter);
 
@@ -57,6 +57,19 @@ new Vue({
 
             recording: Telescope.recording,
         };
+    },
+
+    async mounted() {
+        const watchers = await axios.get('/telescope/telescope-api/entries')
+
+        document.querySelectorAll('.nav-item a').forEach(element => {
+            const path = element.href.split('/');
+
+            if(!watchers.data.enabled.includes(path[path.length - 1])){
+                element.classList.remove('d-flex')
+                element.classList.add('d-none')
+            }
+        })
     },
 
     methods: {

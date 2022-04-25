@@ -20,7 +20,7 @@
             </td>
         </tr>
 
-        <tr>
+        <tr v-if="slotProps.entry.content.controller_action">
             <td class="table-fit font-weight-bold">Controller Action</td>
             <td>
                 {{slotProps.entry.content.controller_action}}
@@ -79,7 +79,7 @@
                     <li class="nav-item">
                         <a class="nav-link" :class="{active: currentTab=='headers'}" href="#" v-on:click.prevent="currentTab='headers'">Headers</a>
                     </li>
-                    <li class="nav-item">
+                    <li class="nav-item" v-if="slotProps.entry.content.session">
                         <a class="nav-link" :class="{active: currentTab=='session'}" href="#" v-on:click.prevent="currentTab='session'">Session</a>
                     </li>
                     <li class="nav-item">

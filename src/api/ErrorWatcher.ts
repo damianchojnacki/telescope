@@ -1,7 +1,9 @@
-import { NextFunction, Request, Response } from "express";
-import DB from "./DB.js";
-import { v4 as uuidv4 } from 'uuid';
-import { fsync, readFileSync } from "fs";
+import {Express, NextFunction, Request, Response} from "express";
+import DB, {WatcherEntryCollectionType, WatcherEntryDataType} from "./DB.js";
+import { readFileSync } from "fs";
+import WatcherEntry from "./WatcherEntry.js";
+import Telescope from "./Telescope";
+import {hostname} from "os";
 
 export interface ErrorWatcherData
 {
@@ -15,36 +17,41 @@ export interface ErrorWatcherData
   occurrences: number
 }
 
+export class ErrorWatcherEntry extends WatcherEntry<ErrorWatcherData>
+{
+    collection = WatcherEntryCollectionType.exception
+
+    constructor(data: ErrorWatcherData) {
+        super(WatcherEntryDataType.exceptions, data);
+    }
+}
+
 export default class ErrorWatcher
 {
     private error: Error
-    private request: Request
 
-    public static capture(error: Error, request: Request, response: Response, next: NextFunction)
+    public static setup()
     {
-        const watcher = new ErrorWatcher(error, request);
+        process
+            .on('uncaughtException', async error => {
+                const watcher = new ErrorWatcher(error)
 
-        if(watcher.shouldIgnore()){
-            next()
+                await watcher.save()
 
-            return;
-        }
+                console.error(error)
 
-        next()
-
-        watcher.save();
+                process.exit(1)
+            });
     }
 
-    constructor(error: Error, request: Request)
-    {
+    constructor(error: Error) {
         this.error = error
-        this.request = request
     }
 
-    private save(): void
+    private async save(): Promise<void>
     {
-        DB.errors().save({
-            hostname: this.request.hostname,
+        const entry = new ErrorWatcherEntry({
+            hostname: hostname(),
             class: this.error.name,
             file: this.getFile(),
             message: this.error.message,
@@ -52,7 +59,9 @@ export default class ErrorWatcher
             line: this.getLine(),
             line_preview: this.getLinePreview(),
             occurrences: 1,
-        });   
+        })
+
+        await DB.errors().save(entry);
     }
 
     private shouldIgnore(): boolean
@@ -62,25 +71,25 @@ export default class ErrorWatcher
 
     private getFile(): string
     {        
-        return (this.error.stack?.split('\n')[1] ?? '').split('at file://')[1] ?? ''
+        return (this.error.stack?.split('\n')[1] ?? '').split('file://')[1] ?? ''
     }
 
     private getLine(): number
     {
         const line = (this.error.stack?.split('\n')[1] ?? '').split(':')
         
-        return Number(line[line.length - 2]) ?? null
+        return Number(line[line.length - 2])
     }
 
     private getLinePreview(): string[]
     {        
-        const path = this.error.stack?.split('\n')[1]?.split('at file://')[1]?.split(':')[0] ?? ''
+        const path = this.getFile().split(':')[0] ?? ''
 
         const preview: any = {}
 
         const errorLine = this.getLine()
 
-        readFileSync(path).toString().split('\n').forEach((line, index) => {
+        path && readFileSync(path).toString().split('\n').forEach((line, index) => {
             if(index > errorLine - 10 && index < errorLine + 10){
                 preview[index + 1] = line
             }

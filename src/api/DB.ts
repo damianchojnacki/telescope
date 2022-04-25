@@ -1,32 +1,35 @@
 import { RequestWatcherData } from "./RequestWatcher.js";
-import { join, dirname } from 'path'
-import { Low, JSONFile, JSONFileSync, LowSync } from 'lowdb'
-import { fileURLToPath } from 'url'
 import LowDriver from "./LowDriver.js";
 import { ErrorWatcherData } from "./ErrorWatcher.js";
 import DatabaseDriver from "./DatabaseDriver.js";
 import { DumpWatcherData } from './DumpWatcher';
 import { ClientRequestWatcherData } from "./ClientRequestWatcher.js";
+import WatcherEntry from "./WatcherEntry.js";
 
 export type WatcherEntryType = "request" | "exception" | "dump" | "client-request"
 
-export interface WatcherEntry
+export enum WatcherEntryDataType
 {
-    id: string
-    created_at: string
-    family_hash: string
-    sequence: number
-    tags: string[]
-    type: WatcherEntryType
-    content: WatcherType
+    requests = "request",
+    exceptions = "exception",
+    dumps = "dump",
+    "client-requests" = "client-request",
+}
+
+export enum WatcherEntryCollectionType
+{
+    request = "requests",
+    exception = "exceptions",
+    dump = "dumps",
+    "client-request" = "client-requests",
 }
 
 export interface WatcherData
 {
-  requests: WatcherEntry[]
-  exceptions: WatcherEntry[]
-  dumps: WatcherEntry[]
-  "client-requests": WatcherEntry[]
+  requests: WatcherEntry<RequestWatcherData>[]
+  exceptions: WatcherEntry<ErrorWatcherData>[]
+  dumps: WatcherEntry<DumpWatcherData>[]
+  "client-requests": WatcherEntry<ClientRequestWatcherData>[]
 }
 
 export type WatcherType = RequestWatcherData | ErrorWatcherData | DumpWatcherData | ClientRequestWatcherData;
@@ -48,12 +51,12 @@ class DB
     return DB.db;
   }
 
-  public static entry(name: keyof WatcherData)
+  public static entry<T extends WatcherType, U extends WatcherEntry<T>>(name: WatcherEntry<T>['collection'])
   {
     return {
         get: async () => (await DB.get()).get(name),
         find: async (id: string) => (await DB.get()).find(name, id),
-        save: async (data: WatcherType) => (await DB.get()).save(name, data),
+        save: async (data: WatcherEntry<T>) => (await DB.get()).save(name, data),
     }
   }
 
@@ -64,22 +67,22 @@ class DB
 
   public static requests()
   {
-      return this.entry("requests")
+      return this.entry(WatcherEntryCollectionType.request)
   }
 
   public static errors()
   {
-    return this.entry("exceptions")
+    return this.entry(WatcherEntryCollectionType.exception)
   }
 
   public static dumps()
   {
-    return this.entry("dumps")
+    return this.entry(WatcherEntryCollectionType.dump)
   }
 
   public static clientRequests()
   {
-    return this.entry("client-requests")
+    return this.entry(WatcherEntryCollectionType['client-request'])
   }
 }
 

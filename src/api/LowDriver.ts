@@ -1,11 +1,10 @@
 import DatabaseDriver from "./DatabaseDriver.js";
-import { Low, JSONFile, JSONFileSync, LowSync } from 'lowdb'
-import { WatcherType, WatcherData } from "./DB.js";
-import { v4 as uuidv4 } from 'uuid';
-import { threadId } from "worker_threads";
-import path, { dirname } from "path";
+import { JSONFileSync, LowSync } from 'lowdb'
+import {WatcherType, WatcherData} from "./DB.js";
+import { dirname } from "path";
 import { fileURLToPath } from "url";
 import { unlinkSync } from "fs";
+import WatcherEntry from "./WatcherEntry.js";
 
 export default class LowDriver implements DatabaseDriver
 {
@@ -17,54 +16,46 @@ export default class LowDriver implements DatabaseDriver
     this.db = new LowSync(adapter)
   }
 
-  public async get(name: keyof WatcherData)
+  public async get<T extends WatcherType>(name: WatcherEntry<T>['collection']): Promise<WatcherEntry<T>[]>
   {
     this.db.read()
 
-    this.db.data ||= { 
+    this.db.data ||= {
       requests: [],
       exceptions: [],
-      dumps: [], 
+      dumps: [],
       "client-requests": [],
     }
 
-    return this.db.data[name] ?? []
+    return this.db.data[name] ?? [];
   }
 
-  public async find(name: keyof WatcherData, id: string)
+  public async find<T extends WatcherType>(name: WatcherEntry<T>['collection'], id: string): Promise<WatcherEntry<T> | undefined>
   {
     this.db.read()
 
     this.db.data ||= { 
       requests: [],
       exceptions: [],
-      dumps: [],  
+      dumps: [],
       "client-requests": [],
     }
 
-    return this.db.data[name].find((entry) => entry.id === id)
+    return this.db.data[name]?.find((entry: WatcherEntry<T>) => entry.id === id)
   }
 
-  public async save(name: keyof WatcherData, data: WatcherType)
+  public async save<T extends keyof WatcherType>(name: WatcherEntry<T>['collection'], data: WatcherEntry<T>)
   {
     this.db.read()
 
     this.db.data ||= { 
       requests: [],
       exceptions: [],
-      dumps: [],  
+      dumps: [],
       "client-requests": [],
     }
 
-    this.db.data[name]?.unshift({
-      id: uuidv4(),
-      created_at: new Date().toISOString(),
-      family_hash: '',
-      sequence: Math.round(Math.random() * 100000),
-      tags: [],
-      type: name == "requests" ? 'request' : "exception",
-      content: data
-    })
+    this.db.data[name]?.unshift(data)
     
     this.db.write()
   }

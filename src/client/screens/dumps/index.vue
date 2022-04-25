@@ -1,6 +1,5 @@
 <script type="text/ecmascript-6">
     import axios from 'axios';
-    import sfdump from './sfdump';
 
     export default {
         /**
@@ -8,13 +7,11 @@
          */
         data() {
             return {
-                dump: null,
                 entries: [],
                 ready: false,
                 newEntriesTimeout: null,
                 newEntriesTimer: 2000,
                 recordingStatus: 'enabled',
-                sfDump: null,
                 triggered: [],
             };
         },
@@ -26,10 +23,7 @@
         mounted() {
             document.title = "Dumps - Telescope";
 
-            this.initDumperJs();
-
             this.loadEntries();
-
         },
 
 
@@ -45,11 +39,8 @@
             loadEntries(){
                 axios.post(Telescope.basePath + '/telescope-api/dumps').then(response => {
                     this.ready = true;
-                    this.dump = response.data.dump;
                     this.entries = response.data.entries;
                     this.recordingStatus = response.data.status;
-
-                    this.$nextTick(() => this.triggerDumps());
 
                     this.checkForNewEntries();
                 });
@@ -74,33 +65,6 @@
                     })
                 }, this.newEntriesTimer);
             },
-
-
-            /**
-             * Initialize the VarDumper JS functions.
-             */
-            initDumperJs() {
-                this.sfDump = sfdump(document);
-            },
-
-
-            /**
-             * Trigger the Sfdump() for every newly dumped <pre> tag.
-             */
-            triggerDumps() {
-                const divs = this.$refs.dumps;
-
-                if (! divs) return;
-
-                divs.forEach(el => {
-                    const id = el.children[0].id;
-
-                    if (this.triggered.includes(id)) return;
-
-                    this.sfDump(id);
-                    this.triggered.push(id);
-                });
-            }
         }
     }
 </script>
@@ -160,7 +124,7 @@
                         <span class="text-white text-monospace" style="font-size: 12px;">{{timeAgo(entry.created_at)}}</span>
                     </div>
 
-                    <div v-html="entry.content.dump" ref="dumps"></div>
+                    <vue-json-pretty :data="entry.content.dump"></vue-json-pretty>
                 </div>
             </transition-group>
         </div>
@@ -168,14 +132,6 @@
 </template>
 
 <style>
-    pre.sf-dump, pre.sf-dump .sf-dump-default {
-        background: none !important;
-    }
-
-    pre.sf-dump {
-        padding-left: 0 !important;
-    }
-
     .entryPointDescription {
         background: black;
         padding-left: 5px;

@@ -23,6 +23,7 @@
     "axios": "^0.26.1",
     "express": "^4.17.3",
     "fetch-intercept": "^2.4.0",
+    "flatted": "^3.2.5",
     "lowdb": "^3.0.0",
     "uuid": "^8.3.2"
   },
