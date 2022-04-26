@@ -1,13 +1,14 @@
-import {NextFunction, Request, Response} from "express";
-import {IncomingHttpHeaders} from "http";
-import DB, {WatcherEntryCollectionType, WatcherEntryDataType} from "./DB.js";
-import WatcherEntry from "./WatcherEntry.js";
-import {parse, stringify} from "flatted";
-import {hostname} from "os";
+import {Request, Response} from "express"
+import {IncomingHttpHeaders} from "http"
+import DB from "./DB.js"
+import WatcherEntry, {WatcherEntryCollectionType, WatcherEntryDataType} from "./WatcherEntry.js"
+import {parse, stringify} from "flatted"
+import {hostname} from "os"
 
 export type HTTPMethod = "GET" | "HEAD" | "POST" | "PUT" | "PATCH" | "DELETE"
 
-export interface RequestWatcherData {
+export interface RequestWatcherData
+{
     hostname: string
     method?: HTTPMethod
     controllerAction?: string
@@ -23,15 +24,18 @@ export interface RequestWatcherData {
     response: any
 }
 
-export class RequestWatcherEntry extends WatcherEntry<RequestWatcherData> {
+export class RequestWatcherEntry extends WatcherEntry<RequestWatcherData>
+{
     collection = WatcherEntryCollectionType.request
 
-    constructor(data: RequestWatcherData, batchId?: string) {
-        super(WatcherEntryDataType.requests, data, batchId);
+    constructor(data: RequestWatcherData, batchId?: string)
+    {
+        super(WatcherEntryDataType.requests, data, batchId)
     }
 }
 
-export default class RequestWatcher {
+export default class RequestWatcher
+{
     public static paramsToFilter = ['password', 'token', 'secret']
     public static ignorePaths = ['/telescope']
     public static responseSizeLimit = 64
@@ -43,28 +47,92 @@ export default class RequestWatcher {
     private startTime: [number, number]
     private oldRedirect?: Function
 
-    public static capture(request: Request, response: Response, batchId?: string) {
-        const watcher = new RequestWatcher(request, response, batchId);
-
-        if (watcher.shouldIgnore()) {
-            return;
-        }
-
-        RequestWatcher.interceptResponse(response, (body: any) => {
-            watcher.responseBody = body
-
-            watcher.save()
-        });
-    }
-
-    constructor(request: Request, response: Response, batchId?: string) {
+    constructor(request: Request, response: Response, batchId?: string)
+    {
         this.batchId = batchId
         this.request = request
         this.response = response
         this.startTime = process.hrtime()
     }
 
-    private save() {
+    public static capture(request: Request, response: Response, batchId?: string)
+    {
+        const watcher = new RequestWatcher(request, response, batchId)
+
+        if (watcher.shouldIgnore()) {
+            return
+        }
+
+        RequestWatcher.interceptResponse(response, (body: any) =>
+        {
+            watcher.responseBody = body
+
+            watcher.save()
+        })
+    }
+
+    public static getMemoryUsage(): number
+    {
+        return Math.round(process.memoryUsage().rss / 1024 / 1024)
+    };
+
+    public static getDurationInMs(startTime: [number, number]): number
+    {
+        const stopTime = process.hrtime(startTime)
+
+        return Math.round(stopTime[0] * 1000 + stopTime[1] / 1000000)
+    }
+
+    public static getPayload(request: Request): object
+    {
+        return {
+            ...request.query,
+            ...RequestWatcher.getFilteredParams(request)
+        }
+    }
+
+    public static interceptResponse(response: Response, callback: Function): void
+    {
+        const oldSend = response.send
+
+        response.send = (content) =>
+        {
+            const sent = oldSend.call(response, content)
+
+            callback(RequestWatcher.contentWithinLimits(content))
+
+            return sent
+        }
+    }
+
+    private static getFilteredParams(request: Request): object
+    {
+        Object.keys(request.params ?? {}).map((key) => RequestWatcher.filter(request.params, key))
+
+        return request.params
+    }
+
+    private static filter(params: object, key: string): object
+    {
+        if (params.hasOwnProperty(key) && RequestWatcher.paramsToFilter.includes(key)) {
+            return Object.assign(params, {[key]: '********'})
+        }
+
+        return params
+    }
+
+    private static contentWithinLimits(content: any): any
+    {
+        try {
+            content = JSON.parse(content)
+        } catch (e) {
+        }
+
+        return stringify(content).length > (1000 * RequestWatcher.responseSizeLimit) ? 'Purged By Telescope' : content
+    }
+
+    private save()
+    {
         const entry = new RequestWatcherEntry({
             hostname: hostname(),
             method: this.request.method as HTTPMethod,
@@ -78,65 +146,13 @@ export default class RequestWatcher {
             response: this.responseBody,
         }, this.batchId)
 
-        DB.requests().save(entry);
+        DB.requests().save(entry)
     }
 
-    public static getMemoryUsage(): number {
-        return Math.round(process.memoryUsage().rss / 1024 / 1024);
-    };
-
-    public static getDurationInMs(startTime: [number, number]): number {
-        const stopTime = process.hrtime(startTime);
-
-        return Math.round(stopTime[0] * 1000 + stopTime[1] / 1000000);
-    }
-
-    public static getPayload(request: Request): object {
-        return {
-            ...request.query,
-            ...RequestWatcher.getFilteredParams(request)
-        }
-    }
-
-    private static getFilteredParams(request: Request): object {
-        Object.keys(request.params ?? {}).map((key) => RequestWatcher.filter(request.params, key))
-
-        return request.params;
-    }
-
-    private static filter(params: object, key: string): object {
-        if (params.hasOwnProperty(key) && RequestWatcher.paramsToFilter.includes(key)) {
-            return Object.assign(params, {[key]: '********'})
-        }
-
-        return params;
-    }
-
-    private shouldIgnore(): boolean {
+    private shouldIgnore(): boolean
+    {
         const checks = RequestWatcher.ignorePaths.map((path) => this.request.path.startsWith(path))
 
         return checks.includes(true)
-    }
-
-    private static contentWithinLimits(content: any): any {
-        try {
-            content = JSON.parse(content);
-        } catch (e) {
-        }
-
-        return stringify(content).length > (1000 * RequestWatcher.responseSizeLimit) ? 'Purged By Telescope' : content;
-    }
-
-    public static interceptResponse(response: Response, callback: Function): void
-    {
-        const oldSend = response.send;
-
-        response.send = (content) => {
-            const sent = oldSend.call(response, content);
-
-            callback(RequestWatcher.contentWithinLimits(content))
-
-            return sent;
-        };
     }
 }

@@ -1,5 +1,4 @@
-import {DumpWatcherData, DumpWatcherEntry} from "./DumpWatcher";
-import {v4 as uuidv4} from "uuid";
+import {DumpWatcherEntry} from "./DumpWatcher"
 
 export default class DumpRepository
 {
@@ -8,7 +7,7 @@ export default class DumpRepository
 
     public static get(): DumpRepository
     {
-        if(!DumpRepository.instance) {
+        if (!DumpRepository.instance) {
             DumpRepository.instance = new DumpRepository()
         }
 

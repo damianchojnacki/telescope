@@ -1,6 +1,6 @@
-import DB, {WatcherEntryCollectionType, WatcherEntryDataType} from "./DB.js";
-import WatcherEntry from "./WatcherEntry.js";
-import {parse, stringify} from 'flatted';
+import WatcherEntry, {WatcherEntryCollectionType, WatcherEntryDataType} from "./WatcherEntry.js"
+import {parse, stringify} from 'flatted'
+import DB from "./DB.js"
 
 export interface DumpWatcherData
 {
@@ -11,8 +11,9 @@ export class DumpWatcherEntry extends WatcherEntry<DumpWatcherData>
 {
     collection = WatcherEntryCollectionType.dump
 
-    constructor(data: DumpWatcherData) {
-        super(WatcherEntryDataType.dumps, data);
+    constructor(data: DumpWatcherData)
+    {
+        super(WatcherEntryDataType.dumps, data)
     }
 }
 
@@ -38,6 +39,6 @@ export default class DumpWatcher
             dump: this.data
         })
 
-        DB.dumps().save(entry);
+        DB.dumps().save(entry)
     }
 }

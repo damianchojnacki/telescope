@@ -1,61 +1,18 @@
-import {RequestWatcherData} from "./RequestWatcher.js";
-import LowDriver from "./LowDriver.js";
-import {ErrorWatcherData} from "./ErrorWatcher.js";
-import DatabaseDriver from "./DatabaseDriver.js";
-import {DumpWatcherData} from './DumpWatcher';
-import {ClientRequestWatcherData} from "./ClientRequestWatcher.js";
-import WatcherEntry from "./WatcherEntry.js";
-import {LogWatcherData} from "./LogWatcher";
+import LowDriver from "./LowDriver.js"
+import DatabaseDriver from "./DatabaseDriver.js"
+import WatcherEntry, {WatcherEntryCollectionType, WatcherType} from "./WatcherEntry.js"
 
-export type WatcherEntryType = "request" | "exception" | "dump" | "client-request"
-
-export enum WatcherEntryDataType {
-    requests = "request",
-    exceptions = "exception",
-    dumps = "dump",
-    logs = "log",
-    "client-requests" = "client-request",
-}
-
-export enum WatcherEntryCollectionType {
-    request = "requests",
-    exception = "exceptions",
-    dump = "dumps",
-    log = "logs",
-    "client-request" = "client-requests",
-}
-
-export interface WatcherData {
-    requests: WatcherEntry<RequestWatcherData>[]
-    exceptions: WatcherEntry<ErrorWatcherData>[]
-    dumps: WatcherEntry<DumpWatcherData>[]
-    logs: WatcherEntry<LogWatcherData>[]
-    "client-requests": WatcherEntry<ClientRequestWatcherData>[]
-}
-
-export type WatcherType =
-    RequestWatcherData |
-    ErrorWatcherData |
-    DumpWatcherData |
-    ClientRequestWatcherData |
-    LogWatcherData
-
-class DB {
+class DB
+{
     private static db: DatabaseDriver
 
-    private constructor() {
+    private constructor()
+    {
         DB.db = new LowDriver()
     }
 
-    private static async get(): Promise<DatabaseDriver> {
-        if (!DB.db) {
-            new DB()
-        }
-
-        return DB.db
-    }
-
-    public static entry<T extends WatcherType, U extends WatcherEntry<T>>(name: WatcherEntry<T>['collection']) {
+    public static entry<T extends WatcherType, U extends WatcherEntry<T>>(name: WatcherEntry<T>['collection'])
+    {
         return {
             get: async () => (await DB.get()).get(name),
             find: async (id: string) => (await DB.get()).find(name, id),
@@ -69,29 +26,44 @@ class DB {
         return (await DB.get()).batch(batchId)
     }
 
-    public static async truncate() {
+    public static async truncate()
+    {
         return (await DB.get()).truncate()
     }
 
-    public static requests() {
+    public static requests()
+    {
         return this.entry(WatcherEntryCollectionType.request)
     }
 
-    public static errors() {
+    public static errors()
+    {
         return this.entry(WatcherEntryCollectionType.exception)
     }
 
-    public static dumps() {
+    public static dumps()
+    {
         return this.entry(WatcherEntryCollectionType.dump)
     }
 
-    public static logs() {
+    public static logs()
+    {
         return this.entry(WatcherEntryCollectionType.log)
     }
 
-    public static clientRequests() {
+    public static clientRequests()
+    {
         return this.entry(WatcherEntryCollectionType['client-request'])
+    }
+
+    private static async get(): Promise<DatabaseDriver>
+    {
+        if (!DB.db) {
+            new DB()
+        }
+
+        return DB.db
     }
 }
 
-export default DB;
+export default DB

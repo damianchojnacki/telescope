@@ -1,8 +1,8 @@
-import axios, {AxiosRequestConfig, AxiosResponse, AxiosRequestHeaders, Method, AxiosResponseHeaders} from 'axios';
-import DB, {WatcherEntryCollectionType, WatcherEntryDataType} from "./DB.js";
-import WatcherEntry from "./WatcherEntry.js";
-import {hostname} from "os";
-import Telescope from "./Telescope";
+import axios, {AxiosRequestConfig, AxiosRequestHeaders, AxiosResponse, AxiosResponseHeaders, Method} from 'axios'
+import DB from "./DB.js"
+import WatcherEntry, {WatcherEntryCollectionType, WatcherEntryDataType} from "./WatcherEntry.js"
+import {hostname} from "os"
+import Telescope from "./Telescope.js"
 
 export interface ClientRequestWatcherData
 {
@@ -20,8 +20,9 @@ export class ClientRequestEntry extends WatcherEntry<ClientRequestWatcherData>
 {
     collection = WatcherEntryCollectionType["client-request"]
 
-    constructor(data: ClientRequestWatcherData, batchId?: string) {
-        super(WatcherEntryDataType["client-requests"], data, batchId);
+    constructor(data: ClientRequestWatcherData, batchId?: string)
+    {
+        super(WatcherEntryDataType["client-requests"], data, batchId)
     }
 }
 
@@ -31,35 +32,6 @@ export default class ClientRequestWatcher
     private request: AxiosRequestConfig
     private response: AxiosResponse
 
-    public static capture(telescope: Telescope)
-    {
-        let request: AxiosRequestConfig, requestError;
-
-        axios.interceptors.request.use(function (config) {
-            request = config;
-
-            return config;
-          }, function (error) {
-            requestError = error;
-
-            return Promise.reject(error);
-          });
-        
-        axios.interceptors.response.use(function (response) {
-            const watcher = new ClientRequestWatcher(request, response, telescope.batchId)
-
-            watcher.save()
-
-            return response;
-          }, function (error) {
-            const watcher = new ClientRequestWatcher(request, error, telescope.batchId)
-
-            watcher.save()
-            
-            return Promise.reject(error);
-          });
-    }
-
     constructor(request: AxiosRequestConfig, response: AxiosResponse, batchId?: string)
     {
         this.batchId = batchId
@@ -67,24 +39,37 @@ export default class ClientRequestWatcher
         this.response = response
     }
 
-    private escapeHTML(html: string)
+    public static capture(telescope: Telescope)
     {
-        return html.replace(
-            /[&<>'"]/g,
-            tag =>
-              ({
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                "'": '&#39;',
-                '"': '&quot;'
-              }[tag] || tag)
-          )
-    }
+        let request: AxiosRequestConfig, requestError
 
-    private isHtmlResponse(): boolean
-    {
-        return this.response?.headers['content-type']?.startsWith('text/html') ?? false
+        axios.interceptors.request.use(function (config)
+        {
+            request = config
+
+            return config
+        }, function (error)
+        {
+            requestError = error
+
+            return Promise.reject(error)
+        })
+
+        axios.interceptors.response.use(function (response)
+        {
+            const watcher = new ClientRequestWatcher(request, response, telescope.batchId)
+
+            watcher.save()
+
+            return response
+        }, function (error)
+        {
+            const watcher = new ClientRequestWatcher(request, error, telescope.batchId)
+
+            watcher.save()
+
+            return Promise.reject(error)
+        })
     }
 
     public save()
@@ -101,5 +86,25 @@ export default class ClientRequestWatcher
         }, this.batchId)
 
         DB.clientRequests().save(entry)
+    }
+
+    private escapeHTML(html: string)
+    {
+        return html.replace(
+            /[&<>'"]/g,
+            tag =>
+                ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag] || tag)
+        )
+    }
+
+    private isHtmlResponse(): boolean
+    {
+        return this.response?.headers['content-type']?.startsWith('text/html') ?? false
     }
 }
