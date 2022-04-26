@@ -26,8 +26,8 @@ export interface RequestWatcherData {
 export class RequestWatcherEntry extends WatcherEntry<RequestWatcherData> {
     collection = WatcherEntryCollectionType.request
 
-    constructor(data: RequestWatcherData) {
-        super(WatcherEntryDataType.requests, data);
+    constructor(data: RequestWatcherData, batchId?: string) {
+        super(WatcherEntryDataType.requests, data, batchId);
     }
 }
 
@@ -36,27 +36,25 @@ export default class RequestWatcher {
     public static ignorePaths = ['/telescope']
     public static responseSizeLimit = 64
 
+    private batchId?: string
     private request: Request
     private response: Response
     private responseBody: any = ''
     private startTime: [number, number]
     private oldRedirect?: Function
 
-    public static capture(request: Request, response: Response, next: NextFunction) {
-        const watcher = new RequestWatcher(request, response);
+    public static capture(request: Request, response: Response, batchId?: string) {
+        const watcher = new RequestWatcher(request, response, batchId);
 
         if (watcher.shouldIgnore()) {
-            next()
-
             return;
         }
 
         watcher.interceptResponse();
-
-        next()
     }
 
-    constructor(request: Request, response: Response) {
+    constructor(request: Request, response: Response, batchId?: string) {
+        this.batchId = batchId
         this.request = request
         this.response = response
         this.startTime = process.hrtime()
@@ -71,16 +69,16 @@ export default class RequestWatcher {
             response_status: this.response.statusCode,
             duration: this.getDurationInMs(),
             ip_address: this.request.ip,
-            memory: this.getMemoryUsage(),
-            payload: this.getPayload(),
+            memory: RequestWatcher.getMemoryUsage(),
+            payload: RequestWatcher.getPayload(this.request),
             headers: this.request.headers,
             response: this.responseBody,
-        })
+        }, this.batchId)
 
         DB.requests().save(entry);
     }
 
-    private getMemoryUsage(): number {
+    public static getMemoryUsage(): number {
         return Math.round(process.memoryUsage().rss / 1024 / 1024);
     };
 
@@ -90,20 +88,20 @@ export default class RequestWatcher {
         return Math.round(stopTime[0] * 1000 + stopTime[1] / 1000000);
     }
 
-    private getPayload(): object {
+    public static getPayload(request: Request): object {
         return {
-            ...this.request.query,
-            ...this.getFilteredParams()
+            ...request.query,
+            ...RequestWatcher.getFilteredParams(request)
         }
     }
 
-    private getFilteredParams(): object {
-        Object.keys(this.request.params ?? {}).map((key) => this.filter(this.request.params, key))
+    private static getFilteredParams(request: Request): object {
+        Object.keys(request.params ?? {}).map((key) => RequestWatcher.filter(request.params, key))
 
-        return this.request.params;
+        return request.params;
     }
 
-    private filter(params: object, key: string): object {
+    private static filter(params: object, key: string): object {
         if (params.hasOwnProperty(key) && RequestWatcher.paramsToFilter.includes(key)) {
             return Object.assign(params, {[key]: '********'})
         }
@@ -117,17 +115,16 @@ export default class RequestWatcher {
         return checks.includes(true)
     }
 
-    private contentWithinLimits(content: any): any
-    {
+    private contentWithinLimits(content: any): any {
         try {
             content = JSON.parse(content);
-        } catch (e) {}
+        } catch (e) {
+        }
 
         return stringify(content).length > (1000 * RequestWatcher.responseSizeLimit) ? 'Purged By Telescope' : content;
     }
 
-    private interceptResponse(): void
-    {
+    private interceptResponse(): void {
         const oldSend = this.response.send;
 
         this.response.send = (content) => {

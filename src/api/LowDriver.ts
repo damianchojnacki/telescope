@@ -24,6 +24,7 @@ export default class LowDriver implements DatabaseDriver
       requests: [],
       exceptions: [],
       dumps: [],
+      logs: [],
       "client-requests": [],
     }
 
@@ -38,10 +39,33 @@ export default class LowDriver implements DatabaseDriver
       requests: [],
       exceptions: [],
       dumps: [],
+      logs: [],
       "client-requests": [],
     }
 
     return this.db.data[name]?.find((entry: WatcherEntry<T>) => entry.id === id)
+  }
+
+  public async batch(batchId: string): Promise<WatcherEntry<any>[]>
+  {
+    this.db.read()
+
+    this.db.data ||= {
+      requests: [],
+      exceptions: [],
+      dumps: [],
+      logs: [],
+      "client-requests": [],
+    }
+
+    const batch: WatcherEntry<any>[] = []
+
+    Object.keys(this.db.data).forEach((key) => {
+      // @ts-ignore
+      batch.push(this.db.data[key])
+    })
+
+    return batch.flat().filter((entry) => entry.batchId === batchId)
   }
 
   public async save<T extends keyof WatcherType>(name: WatcherEntry<T>['collection'], data: WatcherEntry<T>)
@@ -52,6 +76,7 @@ export default class LowDriver implements DatabaseDriver
       requests: [],
       exceptions: [],
       dumps: [],
+      logs: [],
       "client-requests": [],
     }
 

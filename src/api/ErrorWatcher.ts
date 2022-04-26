@@ -4,6 +4,7 @@ import { readFileSync } from "fs";
 import WatcherEntry from "./WatcherEntry.js";
 import Telescope from "./Telescope";
 import {hostname} from "os";
+import RequestWatcher, {HTTPMethod, RequestWatcherEntry} from "./RequestWatcher.js";
 
 export interface ErrorWatcherData
 {
@@ -21,20 +22,23 @@ export class ErrorWatcherEntry extends WatcherEntry<ErrorWatcherData>
 {
     collection = WatcherEntryCollectionType.exception
 
-    constructor(data: ErrorWatcherData) {
-        super(WatcherEntryDataType.exceptions, data);
+    constructor(data: ErrorWatcherData, batchId?: string) {
+        super(WatcherEntryDataType.exceptions, data, batchId);
     }
 }
 
 export default class ErrorWatcher
 {
+    private batchId?: string
     private error: Error
 
-    public static setup()
+    public static setup(telescope: Telescope)
     {
         process
             .on('uncaughtException', async error => {
-                const watcher = new ErrorWatcher(error)
+                const watcher = new ErrorWatcher(error, telescope.batchId)
+
+                telescope.request && await watcher.createRequestEntry(telescope.request)
 
                 await watcher.save()
 
@@ -44,7 +48,8 @@ export default class ErrorWatcher
             });
     }
 
-    constructor(error: Error) {
+    constructor(error: Error, batchId?: string) {
+        this.batchId = batchId
         this.error = error
     }
 
@@ -59,9 +64,28 @@ export default class ErrorWatcher
             line: this.getLine(),
             line_preview: this.getLinePreview(),
             occurrences: 1,
-        })
+        }, this.batchId)
 
         await DB.errors().save(entry);
+    }
+
+    private async createRequestEntry(request: Request)
+    {
+        const entry = new RequestWatcherEntry({
+            hostname: hostname(),
+            method: request.method as HTTPMethod,
+            controllerAction: '',
+            uri: request.path,
+            response_status: 500,
+            duration: 0,
+            ip_address: request.ip,
+            memory: RequestWatcher.getMemoryUsage(),
+            payload: RequestWatcher.getPayload(request),
+            headers: request.headers,
+            response: 'Server Error',
+        }, this.batchId)
+
+        await DB.requests().save(entry);
     }
 
     private shouldIgnore(): boolean

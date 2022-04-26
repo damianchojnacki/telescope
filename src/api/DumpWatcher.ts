@@ -12,7 +12,7 @@ export class DumpWatcherEntry extends WatcherEntry<DumpWatcherData>
     collection = WatcherEntryCollectionType.dump
 
     constructor(data: DumpWatcherData) {
-        super(WatcherEntryDataType.requests, data);
+        super(WatcherEntryDataType.dumps, data);
     }
 }
 

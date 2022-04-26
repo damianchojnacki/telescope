@@ -1,9 +1,12 @@
-import {Express} from 'express'
+import {Express, Request} from 'express'
 import DB, {WatcherEntryCollectionType} from './DB.js';
 import express from 'express';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import ClientRequestWatcher from "./ClientRequestWatcher.js";
+import LogWatcher from "./LogWatcher.js";
+import RequestWatcher from "./RequestWatcher.js";
+import {v4 as uuidv4} from "uuid";
 
 export default class Telescope
 {
@@ -11,10 +14,13 @@ export default class Telescope
         WatcherEntryCollectionType.request,
         WatcherEntryCollectionType.exception,
         WatcherEntryCollectionType.dump,
+        WatcherEntryCollectionType.log,
         WatcherEntryCollectionType['client-request'],
     ]
 
-    app: Express;
+    private app: Express
+    public batchId?: string
+    public request?: Request
 
     public static setup(app: Express) {
         const telescope = new Telescope(app)
@@ -22,7 +28,19 @@ export default class Telescope
         telescope.setUpApi()
         telescope.setUpStaticFiles()
 
-        ClientRequestWatcher.capture()
+        app.use((request, response, next) => {
+            telescope.batchId = uuidv4()
+            telescope.request = request
+
+            RequestWatcher.capture(request, response, telescope.batchId)
+
+            next()
+        })
+
+        ClientRequestWatcher.capture(telescope)
+        LogWatcher.capture(telescope)
+
+        return telescope
     }
 
     constructor(app: Express)
@@ -43,7 +61,8 @@ export default class Telescope
         this.app.get('/telescope/', (request, response) => response.redirect('/telescope/requests'))
     }
 
-    public setUpApi() {
+    public setUpApi()
+    {
         this.app.post('/telescope/telescope-api/:entry', async (request, response) => {
             // @ts-ignore
             const entries = await DB.entry(request.params.entry).get()
@@ -60,7 +79,7 @@ export default class Telescope
 
             response.json({
                 entry,
-                batch: []
+                batch: await DB.batch(entry?.batchId ?? '')
             })
         })
 

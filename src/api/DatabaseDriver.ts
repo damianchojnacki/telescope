@@ -7,6 +7,8 @@ export default interface LowDriver
 
   find<T extends WatcherType>(name: WatcherEntry<T>['collection'], id: string): Promise<WatcherEntry<T> | undefined>
 
+  batch(batchId: string): Promise<WatcherEntry<any>[]>
+
   save<T extends WatcherType>(name: WatcherEntry<T>['collection'], data: WatcherEntry<T>): Promise<void>
 
   truncate(): void

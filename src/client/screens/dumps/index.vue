@@ -102,10 +102,6 @@
             <span>We didn't find anything - just empty space.</span>
         </div>
 
-        <div style="display: none;" v-if="dump">
-            <div v-html="dump"></div>
-        </div>
-
         <div v-if="ready && entries.length > 0" class="code-bg px-3 pt-3">
             <transition-group tag="div" name="list">
                 
