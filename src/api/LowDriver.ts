@@ -85,6 +85,24 @@ export default class LowDriver implements DatabaseDriver
     this.db.write()
   }
 
+  public async update<T extends keyof WatcherType>(name: WatcherEntry<T>['collection'], index: number, toUpdate: WatcherEntry<T>)
+  {
+    this.db.read()
+
+    this.db.data ||= {
+      requests: [],
+      exceptions: [],
+      dumps: [],
+      logs: [],
+      "client-requests": [],
+    }
+
+    this.db.data[name].splice(index, 1)
+    this.db.data[name]?.unshift(toUpdate)
+
+    this.db.write()
+  }
+
   public async truncate()
   {
     const dir = dirname(fileURLToPath(import.meta.url)) + '/../../db.json';

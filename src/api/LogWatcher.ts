@@ -43,6 +43,28 @@ export default class LogWatcher
 
             watcher.save()
         }
+
+        const oldWarn = console.warn
+
+        console.warn = (...data: any[]) => {
+            oldWarn(...data)
+
+            const watcher = new LogWatcher(data, LogLevel.WARNING, telescope.batchId)
+
+            watcher.save()
+        }
+
+        /* console.error handles ErrorWatcher
+        const oldError = console.error
+
+        console.error = (...data: any[]) => {
+            oldError(...data)
+
+            const watcher = new LogWatcher(data, LogLevel.ERROR, telescope.batchId)
+
+            watcher.save()
+        }
+        */
     }
 
     constructor(data: any[], level: LogLevel, batchId?: string)

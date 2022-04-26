@@ -29,16 +29,27 @@ export class ErrorWatcherEntry extends WatcherEntry<ErrorWatcherData>
 
 export default class ErrorWatcher
 {
-    private batchId?: string
     private error: Error
+    private request?: Request
+    private batchId?: string
+    private startTime?: [number, number]
 
     public static setup(telescope: Telescope)
     {
+        telescope.app.use(async (error: Error, request: Request, response: Response, next: NextFunction) => {
+            const watcher = new ErrorWatcher(error, request, telescope.batchId, telescope.startTime)
+
+            await watcher.createRequestEntry()
+
+            await watcher.save()
+
+            next(error)
+        })
+
+        // catch async errors
         process
             .on('uncaughtException', async error => {
-                const watcher = new ErrorWatcher(error, telescope.batchId)
-
-                telescope.request && await watcher.createRequestEntry(telescope.request)
+                const watcher = new ErrorWatcher(error, {} as Request, telescope.batchId, telescope.startTime)
 
                 await watcher.save()
 
@@ -48,13 +59,20 @@ export default class ErrorWatcher
             });
     }
 
-    constructor(error: Error, batchId?: string) {
-        this.batchId = batchId
+    constructor(error: Error, request?: Request, batchId?: string, startTime?: [number, number]) {
         this.error = error
+        this.request = request
+        this.batchId = batchId
+        this.startTime = startTime
     }
 
     private async save(): Promise<void>
     {
+        const errors = (await DB.errors().get());
+
+        const errorIndex = errors.findIndex(error => this.isSameError(error));
+        const error = errors.find(error => this.isSameError(error));
+
         const entry = new ErrorWatcherEntry({
             hostname: hostname(),
             class: this.error.name,
@@ -63,29 +81,34 @@ export default class ErrorWatcher
             trace: this.getStackTrace(),
             line: this.getLine(),
             line_preview: this.getLinePreview(),
-            occurrences: 1,
+            occurrences: (error?.content.occurrences ?? 0) + 1,
         }, this.batchId)
 
-        await DB.errors().save(entry);
+        errorIndex > -1 ? await DB.errors().update(errorIndex, entry) : await DB.errors().save(entry);
     }
 
-    private async createRequestEntry(request: Request)
+    private async createRequestEntry()
     {
         const entry = new RequestWatcherEntry({
             hostname: hostname(),
-            method: request.method as HTTPMethod,
-            controllerAction: '',
-            uri: request.path,
+            method: this.request?.method as HTTPMethod,
+            uri: this.request?.path,
             response_status: 500,
-            duration: 0,
-            ip_address: request.ip,
+            duration: this.startTime ? RequestWatcher.getDurationInMs(this.startTime) : 0,
+            ip_address: this.request?.ip,
             memory: RequestWatcher.getMemoryUsage(),
-            payload: RequestWatcher.getPayload(request),
-            headers: request.headers,
-            response: 'Server Error',
+            payload: this.request ? RequestWatcher.getPayload(this.request) : {},
+            headers: this.request?.headers ?? {},
+            response: 'Server error',
         }, this.batchId)
 
         await DB.requests().save(entry);
+    }
+
+    private isSameError(error: ErrorWatcherEntry): boolean
+    {
+        return error.content.class === this.error.name &&
+            error.content.message === this.error.message
     }
 
     private shouldIgnore(): boolean

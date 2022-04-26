@@ -10,7 +10,7 @@ import {v4 as uuidv4} from "uuid";
 
 export default class Telescope
 {
-    static watcherEntries = [
+    private static watcherEntries = [
         WatcherEntryCollectionType.request,
         WatcherEntryCollectionType.exception,
         WatcherEntryCollectionType.dump,
@@ -18,11 +18,15 @@ export default class Telescope
         WatcherEntryCollectionType['client-request'],
     ]
 
-    private app: Express
+    public app: Express
     public batchId?: string
-    public request?: Request
+    public startTime?: [number, number]
 
-    public static setup(app: Express) {
+    public static setup(app: Express, watcherEntries?: WatcherEntryCollectionType[]) {
+        if(watcherEntries){
+            Telescope.watcherEntries = watcherEntries
+        }
+
         const telescope = new Telescope(app)
 
         telescope.setUpApi()
@@ -30,15 +34,19 @@ export default class Telescope
 
         app.use((request, response, next) => {
             telescope.batchId = uuidv4()
-            telescope.request = request
+            telescope.startTime = process.hrtime()
 
-            RequestWatcher.capture(request, response, telescope.batchId)
+            Telescope.watcherEntries.includes(WatcherEntryCollectionType.request)
+                && RequestWatcher.capture(request, response, telescope.batchId)
 
             next()
         })
 
-        ClientRequestWatcher.capture(telescope)
-        LogWatcher.capture(telescope)
+        Telescope.watcherEntries.includes(WatcherEntryCollectionType["client-request"])
+            && ClientRequestWatcher.capture(telescope)
+
+        Telescope.watcherEntries.includes(WatcherEntryCollectionType.log)
+            && LogWatcher.capture(telescope)
 
         return telescope
     }
@@ -64,8 +72,7 @@ export default class Telescope
     public setUpApi()
     {
         this.app.post('/telescope/telescope-api/:entry', async (request, response) => {
-            // @ts-ignore
-            const entries = await DB.entry(request.params.entry).get()
+            const entries = await DB.entry(request.params.entry as WatcherEntryCollectionType).get()
 
             response.json({
                 entries: entries?.slice(0, Number(request.query.take ?? 50)),
@@ -74,8 +81,7 @@ export default class Telescope
         })
 
         this.app.get('/telescope/telescope-api/:entry/:id', async (request, response) => {
-            // @ts-ignore
-            const entry = await DB.entry(request.params.entry).find(request.params.id)
+            const entry = await DB.entry(request.params.entry as WatcherEntryCollectionType).find(request.params.id)
 
             response.json({
                 entry,

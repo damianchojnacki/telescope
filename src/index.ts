@@ -2,6 +2,7 @@ import express from 'express'
 import DB from './api/DB.js';
 import ErrorWatcher from './api/ErrorWatcher.js';
 import Telescope from './api/Telescope.js';
+import axios from "axios";
 
 const app = express()
 const port = process.env.PORT || 3000;
@@ -12,7 +13,9 @@ app.get('/', async (request, response) => {
   response.send('lol')
 })
 
-app.get('/error', (request, response) => {
+app.get('/error', async (request, response) => {
+  const res = await axios.get('https://google.com')
+
   throw new Error('lolek')
 })
 

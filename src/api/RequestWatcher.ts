@@ -9,13 +9,13 @@ export type HTTPMethod = "GET" | "HEAD" | "POST" | "PUT" | "PATCH" | "DELETE"
 
 export interface RequestWatcherData {
     hostname: string
-    method: HTTPMethod
-    controllerAction: string
+    method?: HTTPMethod
+    controllerAction?: string
     middleware?: string[]
-    uri: string
+    uri?: string
     response_status: number
     duration: number
-    ip_address: string
+    ip_address?: string
     memory: number
     payload: object
     headers: IncomingHttpHeaders
@@ -50,7 +50,11 @@ export default class RequestWatcher {
             return;
         }
 
-        watcher.interceptResponse();
+        RequestWatcher.interceptResponse(response, (body: any) => {
+            watcher.responseBody = body
+
+            watcher.save()
+        });
     }
 
     constructor(request: Request, response: Response, batchId?: string) {
@@ -64,10 +68,9 @@ export default class RequestWatcher {
         const entry = new RequestWatcherEntry({
             hostname: hostname(),
             method: this.request.method as HTTPMethod,
-            controllerAction: '',
             uri: this.request.path,
             response_status: this.response.statusCode,
-            duration: this.getDurationInMs(),
+            duration: RequestWatcher.getDurationInMs(this.startTime),
             ip_address: this.request.ip,
             memory: RequestWatcher.getMemoryUsage(),
             payload: RequestWatcher.getPayload(this.request),
@@ -82,8 +85,8 @@ export default class RequestWatcher {
         return Math.round(process.memoryUsage().rss / 1024 / 1024);
     };
 
-    private getDurationInMs(): number {
-        const stopTime = process.hrtime(this.startTime);
+    public static getDurationInMs(startTime: [number, number]): number {
+        const stopTime = process.hrtime(startTime);
 
         return Math.round(stopTime[0] * 1000 + stopTime[1] / 1000000);
     }
@@ -115,7 +118,7 @@ export default class RequestWatcher {
         return checks.includes(true)
     }
 
-    private contentWithinLimits(content: any): any {
+    private static contentWithinLimits(content: any): any {
         try {
             content = JSON.parse(content);
         } catch (e) {
@@ -124,15 +127,14 @@ export default class RequestWatcher {
         return stringify(content).length > (1000 * RequestWatcher.responseSizeLimit) ? 'Purged By Telescope' : content;
     }
 
-    private interceptResponse(): void {
-        const oldSend = this.response.send;
+    public static interceptResponse(response: Response, callback: Function): void
+    {
+        const oldSend = response.send;
 
-        this.response.send = (content) => {
-            this.responseBody = this.contentWithinLimits(content);
+        response.send = (content) => {
+            const sent = oldSend.call(response, content);
 
-            const sent = oldSend.call(this.response, content);
-
-            this.save()
+            callback(RequestWatcher.contentWithinLimits(content))
 
             return sent;
         };

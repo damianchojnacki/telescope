@@ -11,5 +11,7 @@ export default interface LowDriver
 
   save<T extends WatcherType>(name: WatcherEntry<T>['collection'], data: WatcherEntry<T>): Promise<void>
 
+  update<T extends keyof WatcherType>(name: WatcherEntry<T>['collection'], index: number, toUpdate: WatcherEntry<T>): Promise<void>
+
   truncate(): void
 }

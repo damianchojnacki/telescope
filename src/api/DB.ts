@@ -52,7 +52,7 @@ class DB {
             new DB()
         }
 
-        return DB.db;
+        return DB.db
     }
 
     public static entry<T extends WatcherType, U extends WatcherEntry<T>>(name: WatcherEntry<T>['collection']) {
@@ -60,16 +60,17 @@ class DB {
             get: async () => (await DB.get()).get(name),
             find: async (id: string) => (await DB.get()).find(name, id),
             save: async (data: WatcherEntry<T>) => (await DB.get()).save(name, data),
+            update: async (index: number, toUpdate: WatcherEntry<T>) => (await DB.get()).update(name, index, toUpdate),
         }
     }
 
     public static async batch(batchId: string)
     {
-        return (await DB.get()).batch(batchId);
+        return (await DB.get()).batch(batchId)
     }
 
     public static async truncate() {
-        return (await DB.get()).truncate();
+        return (await DB.get()).truncate()
     }
 
     public static requests() {
