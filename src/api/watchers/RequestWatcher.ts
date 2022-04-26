@@ -1,7 +1,7 @@
 import {Request, Response} from "express"
 import {IncomingHttpHeaders} from "http"
-import DB from "./DB.js"
-import WatcherEntry, {WatcherEntryCollectionType, WatcherEntryDataType} from "./WatcherEntry.js"
+import DB from "../DB.js"
+import WatcherEntry, {WatcherEntryCollectionType, WatcherEntryDataType} from "../WatcherEntry.js"
 import {parse, stringify} from "flatted"
 import {hostname} from "os"
 
@@ -26,8 +26,6 @@ export interface RequestWatcherData
 
 export class RequestWatcherEntry extends WatcherEntry<RequestWatcherData>
 {
-    collection = WatcherEntryCollectionType.request
-
     constructor(data: RequestWatcherData, batchId?: string)
     {
         super(WatcherEntryDataType.requests, data, batchId)

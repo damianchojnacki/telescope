@@ -1,8 +1,8 @@
-import DB from "./DB.js"
-import WatcherEntry, {WatcherEntryCollectionType, WatcherEntryDataType} from "./WatcherEntry.js"
+import DB from "../DB.js"
+import WatcherEntry, {WatcherEntryCollectionType, WatcherEntryDataType} from "../WatcherEntry.js"
 import {parse, stringify} from 'flatted'
 import {hostname} from "os"
-import Telescope from "./Telescope.js"
+import Telescope from "../Telescope.js"
 
 export enum LogLevel
 {
@@ -21,8 +21,6 @@ export interface LogWatcherData
 
 export class LogWatcherEntry extends WatcherEntry<LogWatcherData>
 {
-    collection = WatcherEntryCollectionType.log
-
     constructor(data: LogWatcherData, batchId?: string)
     {
         super(WatcherEntryDataType.logs, data, batchId)

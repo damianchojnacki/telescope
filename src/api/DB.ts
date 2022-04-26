@@ -1,5 +1,5 @@
-import LowDriver from "./LowDriver.js"
-import DatabaseDriver from "./DatabaseDriver.js"
+import LowDriver from "./drivers/LowDriver.js"
+import DatabaseDriver from "./drivers/DatabaseDriver.js"
 import WatcherEntry, {WatcherEntryCollectionType, WatcherType} from "./WatcherEntry.js"
 
 export type Driver = new () => DatabaseDriver;
@@ -23,7 +23,7 @@ class DB
         DB.db = new DB.driver()
     }
 
-    public static entry<T extends WatcherType, U extends WatcherEntry<T>>(name: WatcherEntry<T>['collection'])
+    public static entry<T extends WatcherType, U extends WatcherEntry<T>>(name: WatcherEntryCollectionType)
     {
         return {
             get: async () => (await DB.get()).get(name),

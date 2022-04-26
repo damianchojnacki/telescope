@@ -1,8 +1,8 @@
 import {NextFunction, Request, Response} from "express"
-import DB from "./DB.js"
+import DB from "../DB.js"
 import {readFileSync} from "fs"
-import WatcherEntry, {WatcherEntryCollectionType, WatcherEntryDataType} from "./WatcherEntry.js"
-import Telescope from "./Telescope"
+import WatcherEntry, {WatcherEntryCollectionType, WatcherEntryDataType} from "../WatcherEntry.js"
+import Telescope from "../Telescope.js"
 import {hostname} from "os"
 import RequestWatcher, {HTTPMethod, RequestWatcherEntry} from "./RequestWatcher.js"
 
@@ -20,8 +20,6 @@ export interface ErrorWatcherData
 
 export class ErrorWatcherEntry extends WatcherEntry<ErrorWatcherData>
 {
-    collection = WatcherEntryCollectionType.exception
-
     constructor(data: ErrorWatcherData, batchId?: string)
     {
         super(WatcherEntryDataType.exceptions, data, batchId)

@@ -2,9 +2,9 @@ import express, {Express} from 'express'
 import DB, {Driver} from './DB.js'
 import {fileURLToPath} from 'url'
 import {dirname} from 'path'
-import ClientRequestWatcher from "./ClientRequestWatcher.js"
-import LogWatcher from "./LogWatcher.js"
-import RequestWatcher from "./RequestWatcher.js"
+import ClientRequestWatcher from "./watchers/ClientRequestWatcher.js"
+import LogWatcher from "./watchers/LogWatcher.js"
+import RequestWatcher from "./watchers/RequestWatcher.js"
 import {v4 as uuidv4} from "uuid"
 import {WatcherEntryCollectionType} from "./WatcherEntry.js"
 

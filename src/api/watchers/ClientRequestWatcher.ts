@@ -1,8 +1,8 @@
 import axios, {AxiosRequestConfig, AxiosRequestHeaders, AxiosResponse, AxiosResponseHeaders, Method} from 'axios'
-import DB from "./DB.js"
-import WatcherEntry, {WatcherEntryCollectionType, WatcherEntryDataType} from "./WatcherEntry.js"
+import DB from "../DB.js"
+import WatcherEntry, {WatcherEntryCollectionType, WatcherEntryDataType} from "../WatcherEntry.js"
 import {hostname} from "os"
-import Telescope from "./Telescope.js"
+import Telescope from "../Telescope.js"
 
 export interface ClientRequestWatcherData
 {
@@ -18,8 +18,6 @@ export interface ClientRequestWatcherData
 
 export class ClientRequestEntry extends WatcherEntry<ClientRequestWatcherData>
 {
-    collection = WatcherEntryCollectionType["client-request"]
-
     constructor(data: ClientRequestWatcherData, batchId?: string)
     {
         super(WatcherEntryDataType["client-requests"], data, batchId)

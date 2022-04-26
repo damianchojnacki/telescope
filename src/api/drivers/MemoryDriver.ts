@@ -1,10 +1,10 @@
 import DatabaseDriver from "./DatabaseDriver.js"
-import WatcherEntry, {WatcherType} from "./WatcherEntry.js"
-import {RequestWatcherData} from "./RequestWatcher.js"
-import {ErrorWatcherData} from "./ErrorWatcher.js"
-import {DumpWatcherData} from "./DumpWatcher.js"
-import {LogWatcherData} from "./LogWatcher.js"
-import {ClientRequestWatcherData} from "./ClientRequestWatcher.js"
+import WatcherEntry, {WatcherType} from "../WatcherEntry.js"
+import {RequestWatcherData} from "../watchers/RequestWatcher.js"
+import {ErrorWatcherData} from "../watchers/ErrorWatcher.js"
+import {DumpWatcherData} from "../watchers/DumpWatcher.js"
+import {LogWatcherData} from "../watchers/LogWatcher.js"
+import {ClientRequestWatcherData} from "../watchers/ClientRequestWatcher.js"
 
 export interface WatcherData
 {

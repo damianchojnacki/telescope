@@ -1,17 +1,12 @@
 import express from 'express'
 import DB from './api/DB.js';
-import ErrorWatcher from './api/ErrorWatcher.js';
+import ErrorWatcher from './api/watchers/ErrorWatcher.js';
 import Telescope from './api/Telescope.js';
-import axios from "axios";
-import MemoryDriver from "./api/MemoryDriver.js"
-import LowDriver from "./api/LowDriver.js"
 
 const app = express()
 const port = process.env.PORT || 3000;
 
-const telescope = Telescope.setup(app, {
-  databaseDriver: MemoryDriver
-})
+const telescope = Telescope.setup(app)
 
 app.get('/', async (request, response) => {
   response.send('lol')

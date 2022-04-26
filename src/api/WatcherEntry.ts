@@ -1,9 +1,9 @@
 import {v4 as uuidv4} from "uuid"
-import {RequestWatcherData} from "./RequestWatcher.js"
-import {ErrorWatcherData} from "./ErrorWatcher.js"
-import {DumpWatcherData} from "./DumpWatcher.js"
-import {LogWatcherData} from "./LogWatcher.js"
-import {ClientRequestWatcherData} from "./ClientRequestWatcher.js"
+import {RequestWatcherData} from "./watchers/RequestWatcher.js"
+import {ErrorWatcherData} from "./watchers/ErrorWatcher.js"
+import {DumpWatcherData} from "./watchers/DumpWatcher.js"
+import {LogWatcherData} from "./watchers/LogWatcher.js"
+import {ClientRequestWatcherData} from "./watchers/ClientRequestWatcher.js"
 
 export enum WatcherEntryDataType
 {
@@ -30,19 +30,7 @@ export type WatcherType =
     ClientRequestWatcherData |
     LogWatcherData
 
-export interface WatcherEntryI<T extends WatcherType>
-{
-    id: string
-    batchId?: string,
-    created_at: string
-    family_hash: string
-    sequence: number
-    tags: string[]
-    type: WatcherEntryDataType
-    content: T
-}
-
-export default abstract class WatcherEntry<T extends WatcherType> implements WatcherEntryI<T>
+export default abstract class WatcherEntry<T extends WatcherType>
 {
     content: any
     created_at: string
@@ -52,7 +40,6 @@ export default abstract class WatcherEntry<T extends WatcherType> implements Wat
     sequence: number
     tags: string[]
     type: WatcherEntryDataType
-    abstract collection: WatcherEntryCollectionType
 
     protected constructor(name: WatcherEntryDataType, data: WatcherType, batchId?: string)
     {

@@ -3,12 +3,12 @@ import {JSONFileSync, LowSync} from 'lowdb'
 import {dirname} from "path"
 import {fileURLToPath} from "url"
 import {unlinkSync} from "fs"
-import WatcherEntry, {WatcherType} from "./WatcherEntry.js"
-import {RequestWatcherData} from "./RequestWatcher.js"
-import {ErrorWatcherData} from "./ErrorWatcher.js"
-import {DumpWatcherData} from "./DumpWatcher.js"
-import {LogWatcherData} from "./LogWatcher.js"
-import {ClientRequestWatcherData} from "./ClientRequestWatcher.js"
+import WatcherEntry, {WatcherEntryCollectionType, WatcherType} from "../WatcherEntry.js"
+import {RequestWatcherData} from "../watchers/RequestWatcher.js"
+import {ErrorWatcherData} from "../watchers/ErrorWatcher.js"
+import {DumpWatcherData} from "../watchers/DumpWatcher.js"
+import {LogWatcherData} from "../watchers/LogWatcher.js"
+import {ClientRequestWatcherData} from "../watchers/ClientRequestWatcher.js"
 
 export interface WatcherData
 {
@@ -30,7 +30,7 @@ export default class LowDriver implements DatabaseDriver
         this.db = new LowSync(adapter)
     }
 
-    public async get<T extends WatcherType>(name: WatcherEntry<T>['collection']): Promise<WatcherEntry<T>[]>
+    public async get<T extends WatcherType>(name: WatcherEntryCollectionType): Promise<WatcherEntry<T>[]>
     {
         this.db.read()
 
@@ -45,7 +45,7 @@ export default class LowDriver implements DatabaseDriver
         return this.db.data[name] ?? []
     }
 
-    public async find<T extends WatcherType>(name: WatcherEntry<T>['collection'], id: string): Promise<WatcherEntry<T> | undefined>
+    public async find<T extends WatcherType>(name: WatcherEntryCollectionType, id: string): Promise<WatcherEntry<T> | undefined>
     {
         this.db.read()
 
@@ -83,7 +83,7 @@ export default class LowDriver implements DatabaseDriver
         return batch.flat().filter((entry) => entry.batchId === batchId)
     }
 
-    public async save<T extends keyof WatcherType>(name: WatcherEntry<T>['collection'], data: WatcherEntry<T>)
+    public async save<T extends keyof WatcherType>(name: WatcherEntryCollectionType, data: WatcherEntry<T>)
     {
         this.db.read()
 
@@ -100,7 +100,7 @@ export default class LowDriver implements DatabaseDriver
         this.db.write()
     }
 
-    public async update<T extends keyof WatcherType>(name: WatcherEntry<T>['collection'], index: number, toUpdate: WatcherEntry<T>)
+    public async update<T extends keyof WatcherType>(name: WatcherEntryCollectionType, index: number, toUpdate: WatcherEntry<T>)
     {
         this.db.read()
 
@@ -120,7 +120,7 @@ export default class LowDriver implements DatabaseDriver
 
     public async truncate()
     {
-        const dir = dirname(fileURLToPath(import.meta.url)) + '/../../db.json'
+        const dir = (process.cwd()) + '/db.json'
 
         unlinkSync(dir)
     }
