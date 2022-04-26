@@ -49,7 +49,7 @@ export default class ErrorWatcher
         // catch async errors
         process
             .on('uncaughtException', async error => {
-                const watcher = new ErrorWatcher(error, {} as Request, telescope.batchId, telescope.startTime)
+                const watcher = new ErrorWatcher(error, undefined, telescope.batchId, telescope.startTime)
 
                 await watcher.save()
 

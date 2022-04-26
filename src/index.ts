@@ -14,7 +14,7 @@ app.get('/', async (request, response) => {
 })
 
 app.get('/error', async (request, response) => {
-  const res = await axios.get('https://google.com')
+  await axios.get('https://google.com')
 
   throw new Error('lolek')
 })

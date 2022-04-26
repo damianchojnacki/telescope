@@ -32,7 +32,7 @@ mix.options({
         resolve: {
             symlinks: false,
             alias: {
-                '@': path.resolve(__dirname, '/'),
+                '@': path.resolve(__dirname, 'src/client/'),
             },
         },
         plugins: [
