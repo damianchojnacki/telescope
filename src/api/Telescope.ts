@@ -10,7 +10,7 @@ import {WatcherEntryCollectionType} from "./WatcherEntry.js"
 
 export interface TelescopeOptions
 {
-    watcherEntries?: WatcherEntryCollectionType[]
+    enabledWatchers?: WatcherEntryCollectionType[]
     databaseDriver?: Driver
 }
 
@@ -21,7 +21,7 @@ export default class Telescope
         WatcherEntryCollectionType.exception,
         WatcherEntryCollectionType.dump,
         WatcherEntryCollectionType.log,
-        WatcherEntryCollectionType['client-request'],
+        WatcherEntryCollectionType.clientRequest,
     ]
 
     public app: Express
@@ -35,8 +35,8 @@ export default class Telescope
 
     public static setup(app: Express, options?: TelescopeOptions)
     {
-        if (options?.watcherEntries) {
-            Telescope.watcherEntries = options.watcherEntries
+        if (options?.enabledWatchers) {
+            Telescope.watcherEntries = options.enabledWatchers
         }
 
         if (options?.databaseDriver) {
@@ -59,7 +59,7 @@ export default class Telescope
             next()
         })
 
-        Telescope.watcherEntries.includes(WatcherEntryCollectionType["client-request"])
+        Telescope.watcherEntries.includes(WatcherEntryCollectionType.clientRequest)
         && ClientRequestWatcher.capture(telescope)
 
         Telescope.watcherEntries.includes(WatcherEntryCollectionType.log)

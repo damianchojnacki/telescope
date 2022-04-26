@@ -65,7 +65,7 @@ class DB
 
     public static clientRequests()
     {
-        return this.entry(WatcherEntryCollectionType['client-request'])
+        return this.entry(WatcherEntryCollectionType.clientRequest)
     }
 }
 

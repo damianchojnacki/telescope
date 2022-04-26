@@ -11,7 +11,7 @@ export enum WatcherEntryDataType
     exceptions = "exception",
     dumps = "dump",
     logs = "log",
-    "client-requests" = "client-request",
+    clientRequests = "client-request",
 }
 
 export enum WatcherEntryCollectionType
@@ -20,7 +20,7 @@ export enum WatcherEntryCollectionType
     exception = "exceptions",
     dump = "dumps",
     log = "logs",
-    "client-request" = "client-requests",
+    clientRequest = "client-requests",
 }
 
 export type WatcherType =
