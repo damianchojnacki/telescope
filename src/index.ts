@@ -3,19 +3,21 @@ import DB from './api/DB.js';
 import ErrorWatcher from './api/ErrorWatcher.js';
 import Telescope from './api/Telescope.js';
 import axios from "axios";
+import MemoryDriver from "./api/MemoryDriver.js"
+import LowDriver from "./api/LowDriver.js"
 
 const app = express()
 const port = process.env.PORT || 3000;
 
-const telescope = Telescope.setup(app)
+const telescope = Telescope.setup(app, {
+  databaseDriver: MemoryDriver
+})
 
 app.get('/', async (request, response) => {
   response.send('lol')
 })
 
-app.get('/error', async (request, response) => {
-  await axios.get('https://google.com')
-
+app.get('/error', (request, response) => {
   throw new Error('lolek')
 })
 

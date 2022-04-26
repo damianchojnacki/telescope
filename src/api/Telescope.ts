@@ -1,5 +1,5 @@
 import express, {Express} from 'express'
-import DB from './DB.js'
+import DB, {Driver} from './DB.js'
 import {fileURLToPath} from 'url'
 import {dirname} from 'path'
 import ClientRequestWatcher from "./ClientRequestWatcher.js"
@@ -7,6 +7,12 @@ import LogWatcher from "./LogWatcher.js"
 import RequestWatcher from "./RequestWatcher.js"
 import {v4 as uuidv4} from "uuid"
 import {WatcherEntryCollectionType} from "./WatcherEntry.js"
+
+export interface TelescopeOptions
+{
+    watcherEntries?: WatcherEntryCollectionType[]
+    databaseDriver?: Driver
+}
 
 export default class Telescope
 {
@@ -27,10 +33,14 @@ export default class Telescope
         this.app = app
     }
 
-    public static setup(app: Express, watcherEntries?: WatcherEntryCollectionType[])
+    public static setup(app: Express, options?: TelescopeOptions)
     {
-        if (watcherEntries) {
-            Telescope.watcherEntries = watcherEntries
+        if (options?.watcherEntries) {
+            Telescope.watcherEntries = options.watcherEntries
+        }
+
+        if (options?.databaseDriver) {
+            DB.driver = options.databaseDriver
         }
 
         const telescope = new Telescope(app)

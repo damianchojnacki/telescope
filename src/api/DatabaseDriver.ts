@@ -1,6 +1,6 @@
 import WatcherEntry, {WatcherType} from "./WatcherEntry.js"
 
-export default interface LowDriver
+export default interface DatabaseDriver
 {
     get<T extends WatcherType>(name: WatcherEntry<T>['collection']): Promise<WatcherEntry<T>[]>
 

@@ -2,13 +2,25 @@ import LowDriver from "./LowDriver.js"
 import DatabaseDriver from "./DatabaseDriver.js"
 import WatcherEntry, {WatcherEntryCollectionType, WatcherType} from "./WatcherEntry.js"
 
+export type Driver = new () => DatabaseDriver;
+
 class DB
 {
     private static db: DatabaseDriver
+    public static driver: Driver = LowDriver
+
+    private static async get(): Promise<DatabaseDriver>
+    {
+        if (!DB.db) {
+            new DB()
+        }
+
+        return DB.db
+    }
 
     private constructor()
     {
-        DB.db = new LowDriver()
+        DB.db = new DB.driver()
     }
 
     public static entry<T extends WatcherType, U extends WatcherEntry<T>>(name: WatcherEntry<T>['collection'])
@@ -54,15 +66,6 @@ class DB
     public static clientRequests()
     {
         return this.entry(WatcherEntryCollectionType['client-request'])
-    }
-
-    private static async get(): Promise<DatabaseDriver>
-    {
-        if (!DB.db) {
-            new DB()
-        }
-
-        return DB.db
     }
 }
 
