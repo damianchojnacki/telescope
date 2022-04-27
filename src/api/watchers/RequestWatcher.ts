@@ -34,6 +34,8 @@ export class RequestWatcherEntry extends WatcherEntry<RequestWatcherData>
 
 export default class RequestWatcher
 {
+    public static entryType = WatcherEntryCollectionType.request
+
     public static paramsToFilter: string[] = ['password', 'token', 'secret']
     public static ignorePaths: string[] = ['/ge*']
     public static responseSizeLimit = 64

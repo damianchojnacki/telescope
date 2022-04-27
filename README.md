@@ -102,21 +102,30 @@ app.get('/', async (request, response, next) => {
 
 #### Enabled watchers
 
-Customizing watchers:
-
 ```javascript
-const enabledWatchers = {
-    WatcherEntryCollectionType.request,
-    WatcherEntryCollectionType.exception,
-    WatcherEntryCollectionType.dump,
-    WatcherEntryCollectionType.log,
-    WatcherEntryCollectionType.clientRequest,
-}
-
 const telescope = Telescope.setup(app, {
-    enabledWatchers
+    enabledWatchers: {
+        RequestWatcher,
+        ErrorWatcher,
+        ClientRequestWatcher,
+        DumpWatcher,
+        LogWatcher,
+    },
+    responseSizeLimit: 128,
+    paramsToFilter: ['password'],
+    ignorePaths: ['/admin*']
 })
 ```
+`enabledWatchers` - list of enabled watchers
+
+`responseSizeLimit` - response size limit (KB).
+If limit is exceed watcher will not log response body.
+
+`paramsToFilter` - filter sensitive data,
+If paramsToFilter matches request param it will be converted to *******.
+
+`ignorePaths` - paths to ignore, exact paths or wildcard can be specified
+
 #### Database drivers
 Customizing database driver:
 ```javascript
@@ -145,22 +154,6 @@ update<T extends keyof WatcherType>(name: WatcherEntryCollectionType, index: num
 
 truncate(): Promise<void>
 ```
-
-#### Request watcher
-```javascript
-const telescope = Telescope.setup(app, {
-    responseSizeLimit: 128,
-    paramsToFilter: ['password'],
-    ignorePaths: ['/admin*']
-})
-```
-responseSizeLimit - response size limit (KB).
-If limit is exceed watcher will not log response body.
-
-paramsToFilter - filter sensitive data,
-If paramsToFilter matches request param it will be converted to *******.
-
-ignorePaths - paths to ignore, exact paths or wildcard can be specified
 
 ## License
 

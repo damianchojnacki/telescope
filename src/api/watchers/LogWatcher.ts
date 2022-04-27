@@ -29,6 +29,8 @@ export class LogWatcherEntry extends WatcherEntry<LogWatcherData>
 
 export default class LogWatcher
 {
+    public static entryType = WatcherEntryCollectionType.log
+
     private data: LogWatcherData
     private batchId?: string
 

@@ -28,6 +28,8 @@ export class ErrorWatcherEntry extends WatcherEntry<ErrorWatcherData>
 
 export default class ErrorWatcher
 {
+    public static entryType = WatcherEntryCollectionType.exception
+
     private error: Error
     private request?: Request
     private batchId?: string

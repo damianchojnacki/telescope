@@ -23,6 +23,7 @@ export function dump(data: any): void
 
 export default class DumpWatcher
 {
+    public static entryType = WatcherEntryCollectionType.dump
     private data: any
 
     constructor(data: any)

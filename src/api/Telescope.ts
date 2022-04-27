@@ -7,10 +7,19 @@ import LogWatcher from "./watchers/LogWatcher.js"
 import RequestWatcher from "./watchers/RequestWatcher.js"
 import {v4 as uuidv4} from "uuid"
 import {WatcherEntryCollectionType} from "./WatcherEntry.js"
+import ErrorWatcher from "./watchers/ErrorWatcher.js"
+import DumpWatcher from "./watchers/DumpWatcher.js"
+
+type Watcher =
+    typeof RequestWatcher |
+    typeof ErrorWatcher |
+    typeof ClientRequestWatcher |
+    typeof DumpWatcher |
+    typeof LogWatcher
 
 export interface TelescopeOptions
 {
-    enabledWatchers?: WatcherEntryCollectionType[]
+    enabledWatchers?: Watcher[]
     databaseDriver?: Driver
     responseSizeLimit?: number
     paramsToFilter?: string[]
@@ -19,12 +28,12 @@ export interface TelescopeOptions
 
 export default class Telescope
 {
-    private static watcherEntries = [
-        WatcherEntryCollectionType.request,
-        WatcherEntryCollectionType.exception,
-        WatcherEntryCollectionType.dump,
-        WatcherEntryCollectionType.log,
-        WatcherEntryCollectionType.clientRequest,
+    private static enabledWatchers: Watcher[] = [
+        RequestWatcher,
+        ErrorWatcher,
+        ClientRequestWatcher,
+        DumpWatcher,
+        LogWatcher
     ]
 
     public app: Express
@@ -50,17 +59,17 @@ export default class Telescope
             telescope.batchId = uuidv4()
             telescope.startTime = process.hrtime()
 
-            Telescope.watcherEntries.includes(WatcherEntryCollectionType.request)
-            && RequestWatcher.capture(request, response, telescope.batchId)
+            Telescope.enabledWatchers.includes(RequestWatcher)
+                && RequestWatcher.capture(request, response, telescope.batchId)
 
             next()
         })
 
-        Telescope.watcherEntries.includes(WatcherEntryCollectionType.clientRequest)
-        && ClientRequestWatcher.capture(telescope)
+        Telescope.enabledWatchers.includes(ClientRequestWatcher)
+            && ClientRequestWatcher.capture(telescope)
 
-        Telescope.watcherEntries.includes(WatcherEntryCollectionType.log)
-        && LogWatcher.capture(telescope)
+        Telescope.enabledWatchers.includes(LogWatcher)
+            && LogWatcher.capture(telescope)
 
         return telescope
     }
@@ -68,7 +77,7 @@ export default class Telescope
     private static config(options: TelescopeOptions)
     {
         if (options.enabledWatchers) {
-            Telescope.watcherEntries = options.enabledWatchers
+            Telescope.enabledWatchers = options.enabledWatchers
         }
 
         if (options.databaseDriver) {
@@ -112,7 +121,7 @@ export default class Telescope
         this.app.get("/telescope/telescope-api/entries", async (request, response) =>
         {
             response.json({
-                enabled: Telescope.watcherEntries
+                enabled: Telescope.enabledWatchers.map((watcher) => watcher.entryType)
             })
         })
     }
