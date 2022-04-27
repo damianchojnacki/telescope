@@ -1,5 +1,5 @@
 import DatabaseDriver from "./DatabaseDriver.js"
-import {JSONFileSync, LowSync} from 'lowdb'
+import {LowSync} from 'lowdb'
 import {dirname} from "path"
 import {fileURLToPath} from "url"
 import {unlinkSync} from "fs"
@@ -9,6 +9,7 @@ import {ErrorWatcherData} from "../watchers/ErrorWatcher.js"
 import {DumpWatcherData} from "../watchers/DumpWatcher.js"
 import {LogWatcherData} from "../watchers/LogWatcher.js"
 import {ClientRequestWatcherData} from "../watchers/ClientRequestWatcher.js"
+import {JSONFileSyncAdapter} from "./JSONFileSyncAdapter.js"
 
 export interface WatcherData
 {
@@ -25,12 +26,12 @@ export default class LowDriver implements DatabaseDriver
 
     constructor()
     {
-        const adapter = new JSONFileSync<WatcherData>('db.json')
+        const adapter = new JSONFileSyncAdapter<WatcherData>('db.json')
 
         this.db = new LowSync(adapter)
     }
 
-    public async get<T extends WatcherType>(name: WatcherEntryCollectionType): Promise<WatcherEntry<T>[]>
+    public async get<T extends WatcherType>(name: WatcherEntryCollectionType, take?: number): Promise<WatcherEntry<T>[]>
     {
         this.db.read()
 
@@ -42,7 +43,7 @@ export default class LowDriver implements DatabaseDriver
             "client-requests": [],
         }
 
-        return this.db.data[name] ?? []
+        return (take ? this.db.data[name].slice(0, take) : this.db.data[name]) ?? []
     }
 
     public async find<T extends WatcherType>(name: WatcherEntryCollectionType, id: string): Promise<WatcherEntry<T> | undefined>

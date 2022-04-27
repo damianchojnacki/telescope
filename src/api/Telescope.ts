@@ -12,6 +12,9 @@ export interface TelescopeOptions
 {
     enabledWatchers?: WatcherEntryCollectionType[]
     databaseDriver?: Driver
+    responseSizeLimit?: number
+    paramsToFilter?: string[]
+    ignorePaths?: string[]
 }
 
 export default class Telescope
@@ -35,13 +38,7 @@ export default class Telescope
 
     public static setup(app: Express, options?: TelescopeOptions)
     {
-        if (options?.enabledWatchers) {
-            Telescope.watcherEntries = options.enabledWatchers
-        }
-
-        if (options?.databaseDriver) {
-            DB.driver = options.databaseDriver
-        }
+        Telescope.config(options ?? {})
 
         const telescope = new Telescope(app)
 
@@ -68,14 +65,29 @@ export default class Telescope
         return telescope
     }
 
+    private static config(options: TelescopeOptions)
+    {
+        if (options.enabledWatchers) {
+            Telescope.watcherEntries = options.enabledWatchers
+        }
+
+        if (options.databaseDriver) {
+            DB.driver = options.databaseDriver
+        }
+
+        if(options.responseSizeLimit){
+            RequestWatcher.responseSizeLimit = options.responseSizeLimit
+        }
+    }
+
     public setUpApi()
     {
         this.app.post('/telescope/telescope-api/:entry', async (request, response) =>
         {
-            const entries = await DB.entry(request.params.entry as WatcherEntryCollectionType).get()
+            const entries = await DB.entry(request.params.entry as WatcherEntryCollectionType).get(Number(request.query.take ?? 50))
 
             response.json({
-                entries: entries?.slice(0, Number(request.query.take ?? 50)),
+                entries,
                 status: "enabled"
             })
         })
@@ -92,17 +104,15 @@ export default class Telescope
 
         this.app.delete("/telescope/telescope-api/entries", async (request, response) =>
         {
-            DB.truncate()
+            await DB.truncate()
 
             response.send("OK")
         })
 
         this.app.get("/telescope/telescope-api/entries", async (request, response) =>
         {
-            const enabled = Telescope.watcherEntries
-
             response.json({
-                enabled
+                enabled: Telescope.watcherEntries
             })
         })
     }

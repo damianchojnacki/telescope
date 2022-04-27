@@ -103,6 +103,6 @@ export default class ClientRequestWatcher
 
     private isHtmlResponse(): boolean
     {
-        return this.response?.headers['content-type']?.startsWith('text/html') ?? false
+        return (this.response?.headers ?? [])['content-type']?.startsWith('text/html') ?? false
     }
 }

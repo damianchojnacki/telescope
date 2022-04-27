@@ -1,8 +1,8 @@
 import DB from "../DB.js"
 import WatcherEntry, {WatcherEntryCollectionType, WatcherEntryDataType} from "../WatcherEntry.js"
-import {parse, stringify} from 'flatted'
 import {hostname} from "os"
 import Telescope from "../Telescope.js"
+import {JSONFileSyncAdapter} from "../drivers/JSONFileSyncAdapter.js"
 
 export enum LogLevel
 {
@@ -40,7 +40,7 @@ export default class LogWatcher
             hostname: hostname(),
             level,
             message: this.getMessage(data),
-            context: this.getContext(data),
+            context: data,
         }
     }
 
@@ -51,6 +51,9 @@ export default class LogWatcher
         console.log = (...data: any[]) =>
         {
             oldLog(...data)
+
+            data[0] = data[0].replaceAll('[32m', '')
+            data[0] = data[0].replaceAll('[39m', '')
 
             const watcher = new LogWatcher(data, LogLevel.INFO, telescope.batchId)
 
@@ -93,22 +96,9 @@ export default class LogWatcher
         let message = data.shift()
 
         if (message ! instanceof String) {
-            message = stringify(message)
+            message = JSON.stringify(message, JSONFileSyncAdapter.getRefReplacer())
         }
 
         return message
-    }
-
-    private getContext(data: any[]): any
-    {
-        data.shift()
-
-        try {
-            JSON.stringify(data)
-        } catch {
-            data = JSON.parse(stringify(data))
-        }
-
-        return data
     }
 }

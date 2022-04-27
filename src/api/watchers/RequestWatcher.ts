@@ -2,8 +2,8 @@ import {Request, Response} from "express"
 import {IncomingHttpHeaders} from "http"
 import DB from "../DB.js"
 import WatcherEntry, {WatcherEntryCollectionType, WatcherEntryDataType} from "../WatcherEntry.js"
-import {parse, stringify} from "flatted"
 import {hostname} from "os"
+import {JSONFileSyncAdapter} from "../drivers/JSONFileSyncAdapter.js"
 
 export type HTTPMethod = "GET" | "HEAD" | "POST" | "PUT" | "PATCH" | "DELETE"
 
@@ -34,8 +34,8 @@ export class RequestWatcherEntry extends WatcherEntry<RequestWatcherData>
 
 export default class RequestWatcher
 {
-    public static paramsToFilter = ['password', 'token', 'secret']
-    public static ignorePaths = ['/telescope']
+    public static paramsToFilter: string[] = ['password', 'token', 'secret']
+    public static ignorePaths: string[] = ['/ge*']
     public static responseSizeLimit = 64
 
     private batchId?: string
@@ -121,12 +121,7 @@ export default class RequestWatcher
 
     private static contentWithinLimits(content: any): any
     {
-        try {
-            content = JSON.parse(content)
-        } catch (e) {
-        }
-
-        return stringify(content).length > (1000 * RequestWatcher.responseSizeLimit) ? 'Purged By Telescope' : content
+        return JSON.stringify(content, JSONFileSyncAdapter.getRefReplacer()).length > (1000 * RequestWatcher.responseSizeLimit) ? 'Purged By Telescope' : content
     }
 
     private save()
@@ -149,7 +144,9 @@ export default class RequestWatcher
 
     private shouldIgnore(): boolean
     {
-        const checks = RequestWatcher.ignorePaths.map((path) => this.request.path.startsWith(path))
+        const checks = RequestWatcher.ignorePaths.map((path) => {
+            return path.endsWith('*') ? this.request.path.startsWith(path.slice(0, -1)) : this.request.path === path
+        })
 
         return checks.includes(true)
     }

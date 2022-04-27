@@ -23,7 +23,7 @@ npm i @damianchojnacki/telescope
 ```
 
 ### 2. Usage
-Setup Telescope AFTER creating new express app and BEFORE any route. Setup ErrorWatcher if needed at the end.
+Setup Telescope BEFORE any route. Setup ErrorWatcher if needed at the end.
 
 ```javascript
 import Telescope from './api/Telescope.js';
@@ -39,11 +39,45 @@ app.get('/', (request, response) => {
 ErrorWatcher.setup(telescope)
 ```
 
+#### RequestWatcher
+
+Intercepts requests and responses.
+
+#### LogWatcher
+
+Intercepts console messages.
+
+`console.log` - creates `info` level log
+`console.warn` - creates `warning` level log
+`console.table` - creates `info` level table log
+
+```javascript
+console.log(message, ...content)
+```
+
+#### ClientRequestWatcher
+
+Intercepts axios requests and responses.
+
+#### ErrorWatcher
+
+Logs unhandled errors.
+
+#### DumpWatcher
+
+Saves dump messages.
+
+```javascript
+import {dump} from "./DumpWatcher";
+
+dump("foo")
+```
+
 ### 3. Note about ErrorWatcher (only express < 5.0.0)
 
-Defining async route like below will cause that ErrorWatcher will be unable to create associated request:
-
-`WRONG`
+Unhandled exception thrown in async function cause that ErrorWatcher will be unable to create associated request:
+See [Express docs](http://expressjs.com/en/advanced/best-practice-performance.html#use-promises) <br><br>
+`WRONG ❌`
 ```javascript
 app.get('/', async (request, response) => {
     await someAsyncFuncThatThrowsException()
@@ -52,7 +86,7 @@ app.get('/', async (request, response) => {
 })
 ```
 
-`GOOD`
+`GOOD ✅`
 ```javascript
 app.get('/', async (request, response, next) => {
     try{
@@ -68,7 +102,7 @@ app.get('/', async (request, response, next) => {
 
 #### Enabled watchers
 
-You can define enabled watchers by passing options to Telescope:
+Customizing watchers:
 
 ```javascript
 const enabledWatchers = {
@@ -84,7 +118,7 @@ const telescope = Telescope.setup(app, {
 })
 ```
 #### Database drivers
-You can define change database driver by passing options to Telescope:
+Customizing database driver:
 ```javascript
 import MemoryDriver from "./api/drivers/MemoryDriver.js"
 
@@ -96,6 +130,37 @@ const telescope = Telescope.setup(app, {
 At the moment available are two drivers:
 1. LowDriver (LowDB) - data is stored in json file and persist between application restart.
 2. MemoryDriver - data is stored in memory and will be lost after application restart.
+
+Feel free to create custom driver. It must implement `DatabaseDriver`:
+```typescript
+get<T extends WatcherType>(name: WatcherEntryCollectionType, take?: number): Promise<WatcherEntry<T>[]>
+
+find<T extends WatcherType>(name: WatcherEntryCollectionType, id: string): Promise<WatcherEntry<T> | undefined>
+
+batch(batchId: string): Promise<WatcherEntry<any>[]>
+
+save<T extends WatcherType>(name: WatcherEntryCollectionType, data: WatcherEntry<T>): Promise<void>
+
+update<T extends keyof WatcherType>(name: WatcherEntryCollectionType, index: number, toUpdate: WatcherEntry<T>): Promise<void>
+
+truncate(): Promise<void>
+```
+
+#### Request watcher
+```javascript
+const telescope = Telescope.setup(app, {
+    responseSizeLimit: 128,
+    paramsToFilter: ['password'],
+    ignorePaths: ['/admin*']
+})
+```
+responseSizeLimit - response size limit (KB).
+If limit is exceed watcher will not log response body.
+
+paramsToFilter - filter sensitive data,
+If paramsToFilter matches request param it will be converted to *******.
+
+ignorePaths - paths to ignore, exact paths or wildcard can be specified
 
 ## License
 

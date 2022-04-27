@@ -1,5 +1,4 @@
 import WatcherEntry, {WatcherEntryCollectionType, WatcherEntryDataType} from "../WatcherEntry.js"
-import {parse, stringify} from 'flatted'
 import DB from "../DB.js"
 
 export interface DumpWatcherData
@@ -28,7 +27,7 @@ export default class DumpWatcher
 
     constructor(data: any)
     {
-        this.data = JSON.parse(stringify(data))
+        this.data = data
     }
 
     public save()

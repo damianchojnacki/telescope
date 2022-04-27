@@ -1,5 +1,5 @@
 import DatabaseDriver from "./DatabaseDriver.js"
-import WatcherEntry, {WatcherType} from "../WatcherEntry.js"
+import WatcherEntry, {WatcherEntryCollectionType, WatcherType} from "../WatcherEntry.js"
 import {RequestWatcherData} from "../watchers/RequestWatcher.js"
 import {ErrorWatcherData} from "../watchers/ErrorWatcher.js"
 import {DumpWatcherData} from "../watchers/DumpWatcher.js"
@@ -30,12 +30,12 @@ export default class MemoryDriver implements DatabaseDriver
         }
     }
 
-    public async get<T extends WatcherType>(name: WatcherEntry<T>['collection']): Promise<WatcherEntry<T>[]>
+    public async get<T extends WatcherType>(name: WatcherEntryCollectionType): Promise<WatcherEntry<T>[]>
     {
         return this.db[name] ?? []
     }
 
-    public async find<T extends WatcherType>(name: WatcherEntry<T>['collection'], id: string): Promise<WatcherEntry<T> | undefined>
+    public async find<T extends WatcherType>(name: WatcherEntryCollectionType, id: string): Promise<WatcherEntry<T> | undefined>
     {
         return this.db[name]?.find((entry: WatcherEntry<T>) => entry.id === id)
     }
@@ -53,12 +53,12 @@ export default class MemoryDriver implements DatabaseDriver
         return batch.flat().filter((entry) => entry.batchId === batchId)
     }
 
-    public async save<T extends keyof WatcherType>(name: WatcherEntry<T>['collection'], data: WatcherEntry<T>)
+    public async save<T extends keyof WatcherType>(name: WatcherEntryCollectionType, data: WatcherEntry<T>)
     {
         this.db[name]?.unshift(data)
     }
 
-    public async update<T extends keyof WatcherType>(name: WatcherEntry<T>['collection'], index: number, toUpdate: WatcherEntry<T>)
+    public async update<T extends keyof WatcherType>(name: WatcherEntryCollectionType, index: number, toUpdate: WatcherEntry<T>)
     {
         this.db[name].splice(index, 1)
         this.db[name]?.unshift(toUpdate)

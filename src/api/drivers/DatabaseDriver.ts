@@ -2,7 +2,7 @@ import WatcherEntry, {WatcherEntryCollectionType, WatcherType} from "../WatcherE
 
 export default interface DatabaseDriver
 {
-    get<T extends WatcherType>(name: WatcherEntryCollectionType): Promise<WatcherEntry<T>[]>
+    get<T extends WatcherType>(name: WatcherEntryCollectionType, take?: number): Promise<WatcherEntry<T>[]>
 
     find<T extends WatcherType>(name: WatcherEntryCollectionType, id: string): Promise<WatcherEntry<T> | undefined>
 
@@ -12,5 +12,5 @@ export default interface DatabaseDriver
 
     update<T extends keyof WatcherType>(name: WatcherEntryCollectionType, index: number, toUpdate: WatcherEntry<T>): Promise<void>
 
-    truncate(): void
+    truncate(): Promise<void>
 }
