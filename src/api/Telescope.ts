@@ -22,8 +22,9 @@ export interface TelescopeOptions
     enabledWatchers?: Watcher[]
     databaseDriver?: Driver
     responseSizeLimit?: number
-    paramsToFilter?: string[]
+    paramsToHide?: string[]
     ignorePaths?: string[]
+    ignoreErrors?: ErrorConstructor[]
 }
 
 export default class Telescope
@@ -38,7 +39,6 @@ export default class Telescope
 
     public app: Express
     public batchId?: string
-    public startTime?: [number, number]
 
     constructor(app: Express)
     {
@@ -57,7 +57,6 @@ export default class Telescope
         app.use((request, response, next) =>
         {
             telescope.batchId = uuidv4()
-            telescope.startTime = process.hrtime()
 
             Telescope.enabledWatchers.includes(RequestWatcher)
                 && RequestWatcher.capture(request, response, telescope.batchId)
@@ -74,6 +73,11 @@ export default class Telescope
         return telescope
     }
 
+    public getEnabledWatchers(): string[]
+    {
+        return Telescope.enabledWatchers.map((watcher) => watcher.entryType)
+    }
+
     private static config(options: TelescopeOptions)
     {
         if (options.enabledWatchers) {
@@ -87,9 +91,21 @@ export default class Telescope
         if(options.responseSizeLimit){
             RequestWatcher.responseSizeLimit = options.responseSizeLimit
         }
+
+        if(options.ignorePaths){
+            RequestWatcher.ignorePaths = options.ignorePaths
+        }
+
+        if(options.paramsToHide){
+            RequestWatcher.paramsToHide = options.paramsToHide
+        }
+
+        if(options.ignoreErrors){
+            ErrorWatcher.ignoreErrors = options.ignoreErrors
+        }
     }
 
-    public setUpApi()
+    private setUpApi()
     {
         this.app.post('/telescope/telescope-api/:entry', async (request, response) =>
         {
@@ -121,21 +137,25 @@ export default class Telescope
         this.app.get("/telescope/telescope-api/entries", async (request, response) =>
         {
             response.json({
-                enabled: Telescope.enabledWatchers.map((watcher) => watcher.entryType)
+                enabled: this.getEnabledWatchers()
             })
         })
     }
 
     private setUpStaticFiles()
     {
-        const dir = dirname(fileURLToPath(import.meta.url)) + '/../../dist/'
+        const dir = process.cwd() + '/dist/'
 
         this.app.use('/telescope/app.js', express.static(dir + "app.js"))
         this.app.use('/telescope/app.css', express.static(dir + "app.css"))
         this.app.use('/telescope/app-dark.css', express.static(dir + "app-dark.css"))
         this.app.use('/telescope/favicon.ico', express.static(dir + "favicon.ico"))
 
-        this.app.use('/telescope/*', express.static(dir + 'index.html'))
+        this.getEnabledWatchers().forEach((watcher) => {
+            this.app.use(`/telescope/${watcher}`, express.static(dir + 'index.html'))
+            this.app.use(`/telescope/${watcher}/:id`, express.static(dir + 'index.html'))
+        })
+
         this.app.get('/telescope/', (request, response) => response.redirect('/telescope/requests'))
     }
 }

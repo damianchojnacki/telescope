@@ -121,7 +121,7 @@ export default class LowDriver implements DatabaseDriver
 
     public async truncate()
     {
-        const dir = (process.cwd()) + '/db.json'
+        const dir = process.cwd() + '/db.json'
 
         unlinkSync(dir)
     }

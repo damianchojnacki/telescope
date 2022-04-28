@@ -41,7 +41,7 @@ export default abstract class WatcherEntry<T extends WatcherType>
     tags: string[]
     type: WatcherEntryDataType
 
-    protected constructor(name: WatcherEntryDataType, data: WatcherType, batchId?: string)
+    protected constructor(name: WatcherEntryDataType, data: T, batchId?: string)
     {
         this.id = uuidv4()
         this.created_at = new Date().toISOString()

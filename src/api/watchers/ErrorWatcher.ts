@@ -4,7 +4,6 @@ import {readFileSync} from "fs"
 import WatcherEntry, {WatcherEntryCollectionType, WatcherEntryDataType} from "../WatcherEntry.js"
 import Telescope from "../Telescope.js"
 import {hostname} from "os"
-import RequestWatcher, {HTTPMethod, RequestWatcherEntry} from "./RequestWatcher.js"
 
 export interface ErrorWatcherData
 {
@@ -29,40 +28,37 @@ export class ErrorWatcherEntry extends WatcherEntry<ErrorWatcherData>
 export default class ErrorWatcher
 {
     public static entryType = WatcherEntryCollectionType.exception
+    public static ignoreErrors: ErrorConstructor[] = []
 
     private error: Error
-    private request?: Request
     private batchId?: string
-    private startTime?: [number, number]
-
-    constructor(error: Error, request?: Request, batchId?: string, startTime?: [number, number])
-    {
-        this.error = error
-        this.request = request
-        this.batchId = batchId
-        this.startTime = startTime
-    }
 
     public static setup(telescope: Telescope)
     {
-        telescope.app.use(async (error: Error, request: Request, response: Response, next: NextFunction) =>
-        {
-            const watcher = new ErrorWatcher(error, request, telescope.batchId, telescope.startTime)
+        telescope.app.use(async (error: Error, request: Request, response: Response, next: NextFunction) => {
+            const watcher = new ErrorWatcher(error, telescope.batchId)
 
-            await watcher.createRequestEntry()
+            if(watcher.shouldIgnore()){
+                next(error)
 
-            await watcher.save()
+                return
+            }
+
+            await watcher.saveOrUpdate()
 
             next(error)
         })
 
         // catch async errors
         process
-            .on('uncaughtException', async error =>
-            {
-                const watcher = new ErrorWatcher(error, undefined, telescope.batchId, telescope.startTime)
+            .on('uncaughtException', async error => {
+                const watcher = new ErrorWatcher(error, telescope.batchId)
 
-                await watcher.save()
+                if(watcher.shouldIgnore()){
+                    return
+                }
+
+                await watcher.saveOrUpdate()
 
                 console.error(error)
 
@@ -70,12 +66,25 @@ export default class ErrorWatcher
             })
     }
 
-    private async save(): Promise<void>
+    constructor(error: Error, batchId?: string)
+    {
+        this.error = error
+        this.batchId = batchId
+    }
+
+    private async getSameError()
     {
         const errors = (await DB.errors().get())
 
-        const errorIndex = errors.findIndex(error => this.isSameError(error))
+        const index = errors.findIndex(error => this.isSameError(error))
         const error = errors.find(error => this.isSameError(error))
+
+        return {error, index};
+    }
+
+    private async saveOrUpdate()
+    {
+        const {error, index} = await this.getSameError()
 
         const entry = new ErrorWatcherEntry({
             hostname: hostname(),
@@ -88,36 +97,19 @@ export default class ErrorWatcher
             occurrences: (error?.content.occurrences ?? 0) + 1,
         }, this.batchId)
 
-        errorIndex > -1 ? await DB.errors().update(errorIndex, entry) : await DB.errors().save(entry)
-    }
-
-    private async createRequestEntry()
-    {
-        const entry = new RequestWatcherEntry({
-            hostname: hostname(),
-            method: this.request?.method as HTTPMethod,
-            uri: this.request?.path,
-            response_status: 500,
-            duration: this.startTime ? RequestWatcher.getDurationInMs(this.startTime) : 0,
-            ip_address: this.request?.ip,
-            memory: RequestWatcher.getMemoryUsage(),
-            payload: this.request ? RequestWatcher.getPayload(this.request) : {},
-            headers: this.request?.headers ?? {},
-            response: 'Server error',
-        }, this.batchId)
-
-        await DB.requests().save(entry)
+        error ? await DB.errors().update(index, entry) : await DB.errors().save(entry)
     }
 
     private isSameError(error: ErrorWatcherEntry): boolean
     {
         return error.content.class === this.error.name &&
-            error.content.message === this.error.message
+            error.content.message === this.error.message &&
+            error.content.file === this.getFile()
     }
 
     private shouldIgnore(): boolean
     {
-        return false
+        return ErrorWatcher.ignoreErrors.includes(this.error.constructor as ErrorConstructor)
     }
 
     private getFile(): string

@@ -5,7 +5,14 @@ import WatcherEntry, {WatcherEntryCollectionType, WatcherEntryDataType} from "..
 import {hostname} from "os"
 import {JSONFileSyncAdapter} from "../drivers/JSONFileSyncAdapter.js"
 
-export type HTTPMethod = "GET" | "HEAD" | "POST" | "PUT" | "PATCH" | "DELETE"
+export enum HTTPMethod{
+    GET = "GET",
+    HEAD = "HEAD",
+    POST = "POST",
+    PUT = "PUT",
+    PATCH = "PATCH",
+    DELETE = "DELETE",
+}
 
 export interface RequestWatcherData
 {
@@ -36,8 +43,8 @@ export default class RequestWatcher
 {
     public static entryType = WatcherEntryCollectionType.request
 
-    public static paramsToFilter: string[] = ['password', 'token', 'secret']
-    public static ignorePaths: string[] = ['/ge*']
+    public static paramsToHide: string[] = ['password', 'token', 'secret']
+    public static ignorePaths: string[] = []
     public static responseSizeLimit = 64
 
     private batchId?: string
@@ -45,7 +52,6 @@ export default class RequestWatcher
     private response: Response
     private responseBody: any = ''
     private startTime: [number, number]
-    private oldRedirect?: Function
 
     constructor(request: Request, response: Response, batchId?: string)
     {
@@ -63,7 +69,7 @@ export default class RequestWatcher
             return
         }
 
-        RequestWatcher.interceptResponse(response, (body: any) =>
+        watcher.interceptResponse((body: any) =>
         {
             watcher.responseBody = body
 
@@ -71,57 +77,57 @@ export default class RequestWatcher
         })
     }
 
-    public static getMemoryUsage(): number
+    private getMemoryUsage(): number
     {
         return Math.round(process.memoryUsage().rss / 1024 / 1024)
     };
 
-    public static getDurationInMs(startTime: [number, number]): number
+    private getDurationInMs(): number
     {
-        const stopTime = process.hrtime(startTime)
+        const stopTime = process.hrtime(this.startTime)
 
         return Math.round(stopTime[0] * 1000 + stopTime[1] / 1000000)
     }
 
-    public static getPayload(request: Request): object
+    private getPayload(): object
     {
         return {
-            ...request.query,
-            ...RequestWatcher.getFilteredParams(request)
+            ...this.request.query,
+            ...this.getFilteredBody()
         }
     }
 
-    public static interceptResponse(response: Response, callback: Function): void
+    private interceptResponse(callback: Function): void
     {
-        const oldSend = response.send
+        const oldSend = this.response.send
 
-        response.send = (content) =>
+        this.response.send = (content) =>
         {
-            const sent = oldSend.call(response, content)
+            const sent = oldSend.call(this.response, content)
 
-            callback(RequestWatcher.contentWithinLimits(content))
+            callback(this.contentWithinLimits(content))
 
             return sent
         }
     }
 
-    private static getFilteredParams(request: Request): object
+    private getFilteredBody(): object
     {
-        Object.keys(request.params ?? {}).map((key) => RequestWatcher.filter(request.params, key))
+        Object.keys(this.request.body ?? {}).map((key) => this.filter(this.request.body, key))
 
-        return request.params
+        return this.request.body
     }
 
-    private static filter(params: object, key: string): object
+    private filter(params: object, key: string): object
     {
-        if (params.hasOwnProperty(key) && RequestWatcher.paramsToFilter.includes(key)) {
+        if (params.hasOwnProperty(key) && RequestWatcher.paramsToHide.includes(key)) {
             return Object.assign(params, {[key]: '********'})
         }
 
         return params
     }
 
-    private static contentWithinLimits(content: any): any
+    private contentWithinLimits(content: any): any
     {
         return JSON.stringify(content, JSONFileSyncAdapter.getRefReplacer()).length > (1000 * RequestWatcher.responseSizeLimit) ? 'Purged By Telescope' : content
     }
@@ -133,10 +139,10 @@ export default class RequestWatcher
             method: this.request.method as HTTPMethod,
             uri: this.request.path,
             response_status: this.response.statusCode,
-            duration: RequestWatcher.getDurationInMs(this.startTime),
+            duration: this.getDurationInMs(),
             ip_address: this.request.ip,
-            memory: RequestWatcher.getMemoryUsage(),
-            payload: RequestWatcher.getPayload(this.request),
+            memory: this.getMemoryUsage(),
+            payload: this.getPayload(),
             headers: this.request.headers,
             response: this.responseBody,
         }, this.batchId)

@@ -1,9 +1,10 @@
-import express from 'express'
+import express, {NextFunction, Request, Response} from 'express'
 import DB from './api/DB.js';
 import ErrorWatcher from './api/watchers/ErrorWatcher.js';
 import Telescope from './api/Telescope.js';
 import {dump} from "./api/watchers/DumpWatcher.js"
 import axios from "axios"
+import RequestWatcher from "./api/watchers/RequestWatcher.js"
 
 const app = express()
 const port = process.env.PORT || 3000;
@@ -14,8 +15,8 @@ app.get('/', async (request, response) => {
   response.send('lol')
 })
 
-app.get('/error', async (request, response, next) => {
-    throw new Error('lolek')
+app.get('/error', (request, response, next) => {
+    throw new TypeError('lolek')
 })
 
 app.get('/get', async (request, response) => {

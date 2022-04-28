@@ -75,7 +75,7 @@ dump("foo")
 
 ### 3. Note about ErrorWatcher (only express < 5.0.0)
 
-Unhandled exception thrown in async function cause that ErrorWatcher will be unable to create associated request:
+Unhandled exception thrown in async function cause that Telescope will be unable to create associated request:
 See [Express docs](http://expressjs.com/en/advanced/best-practice-performance.html#use-promises) <br><br>
 `WRONG ❌`
 ```javascript
@@ -112,8 +112,17 @@ const telescope = Telescope.setup(app, {
         LogWatcher,
     },
     responseSizeLimit: 128,
-    paramsToFilter: ['password'],
-    ignorePaths: ['/admin*']
+    paramsToFilter: [
+        'password',
+        'token'
+    ],
+    ignorePaths: [
+        '/admin*',
+        '/docs'
+    ],
+    ignoreErrors: [
+        TypeError
+    ]
 })
 ```
 `enabledWatchers` - list of enabled watchers
@@ -125,6 +134,8 @@ If limit is exceed watcher will not log response body.
 If paramsToFilter matches request param it will be converted to *******.
 
 `ignorePaths` - paths to ignore, exact paths or wildcard can be specified
+
+`ignorePaths` - errors to ignore from logging
 
 #### Database drivers
 Customizing database driver:
