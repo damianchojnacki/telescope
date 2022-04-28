@@ -1,4 +1,4 @@
-import DatabaseDriver from "./DatabaseDriver.js"
+import DatabaseDriver, {WatcherData} from "./DatabaseDriver.js"
 import {LowSync} from 'lowdb'
 import {dirname} from "path"
 import {fileURLToPath} from "url"
@@ -10,15 +10,6 @@ import {DumpWatcherData} from "../watchers/DumpWatcher.js"
 import {LogWatcherData} from "../watchers/LogWatcher.js"
 import {ClientRequestWatcherData} from "../watchers/ClientRequestWatcher.js"
 import {JSONFileSyncAdapter} from "./JSONFileSyncAdapter.js"
-
-export interface WatcherData
-{
-    requests: WatcherEntry<RequestWatcherData>[]
-    exceptions: WatcherEntry<ErrorWatcherData>[]
-    dumps: WatcherEntry<DumpWatcherData>[]
-    logs: WatcherEntry<LogWatcherData>[]
-    "client-requests": WatcherEntry<ClientRequestWatcherData>[]
-}
 
 export default class LowDriver implements DatabaseDriver
 {

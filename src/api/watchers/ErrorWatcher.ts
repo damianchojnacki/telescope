@@ -114,7 +114,7 @@ export default class ErrorWatcher
 
     private getFile(): string
     {
-        return (this.error.stack?.split('\n')[1] ?? '').split('file://')[1] ?? ''
+        return (this.error.stack?.split('\n')[1] ?? '').split('at ')[1] ?? ''
     }
 
     private getLine(): number

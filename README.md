@@ -75,7 +75,7 @@ dump("foo")
 
 ### 3. Note about ErrorWatcher (only express < 5.0.0)
 
-Unhandled exception thrown in async function cause that Telescope will be unable to create associated request:
+Unhandled exception thrown in async function causes that Telescope will is unable to create associated request:
 See [Express docs](http://expressjs.com/en/advanced/best-practice-performance.html#use-promises) <br><br>
 `WRONG ❌`
 ```javascript
@@ -112,9 +112,9 @@ const telescope = Telescope.setup(app, {
         LogWatcher,
     },
     responseSizeLimit: 128,
-    paramsToFilter: [
+    paramsToHide: [
         'password',
-        'token'
+        '_csrf'
     ],
     ignorePaths: [
         '/admin*',
@@ -122,7 +122,16 @@ const telescope = Telescope.setup(app, {
     ],
     ignoreErrors: [
         TypeError
-    ]
+    ],
+    isAuthorized: (request, response, next) => {
+        if(request.session.token !== 'someSecretToken'){
+            response.status(403).send('Access denied')
+            
+            return
+        }
+        
+        next()
+    }
 })
 ```
 `enabledWatchers` - list of enabled watchers
@@ -130,12 +139,14 @@ const telescope = Telescope.setup(app, {
 `responseSizeLimit` - response size limit (KB).
 If limit is exceed watcher will not log response body.
 
-`paramsToFilter` - filter sensitive data,
+`paramsToHide` - filter sensitive data,
 If paramsToFilter matches request param it will be converted to *******.
 
 `ignorePaths` - paths to ignore, exact paths or wildcard can be specified
 
-`ignorePaths` - errors to ignore from logging
+`ignoreErrors` - errors to ignore
+
+`isAuthorized` - be default telescope is disabled on production, if you want to change this behaviour you can provide custom isAuthorized function
 
 #### Database drivers
 Customizing database driver:

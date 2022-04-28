@@ -1,28 +1,19 @@
-import express, {NextFunction, Request, Response} from 'express'
-import DB from './api/DB.js';
-import ErrorWatcher from './api/watchers/ErrorWatcher.js';
-import Telescope from './api/Telescope.js';
-import {dump} from "./api/watchers/DumpWatcher.js"
-import axios from "axios"
-import RequestWatcher from "./api/watchers/RequestWatcher.js"
+import Telescope from "./api/Telescope";
 
-const app = express()
-const port = process.env.PORT || 3000;
+export default Telescope
 
-const telescope = Telescope.setup(app)
+export * from './api/drivers/DatabaseDriver.js'
+export * from './api/drivers/JSONFileSyncAdapter.js'
+export * from './api/drivers/LowDriver.js'
+export * from './api/drivers/DatabaseDriver.js'
+export * from './api/drivers/MemoryDriver.js'
 
-app.get('/', async (request, response) => {
-  response.send('lol')
-})
+export * from './api/watchers/ClientRequestWatcher.js'
+export * from './api/watchers/DumpWatcher.js'
+export * from './api/watchers/ErrorWatcher.js'
+export * from './api/watchers/LogWatcher.js'
+export * from './api/watchers/RequestWatcher.js'
 
-app.get('/error', (request, response, next) => {
-    throw new TypeError('lolek')
-})
-
-app.get('/get', async (request, response) => {
-  response.json((await DB.requests().get()))
-})
-
-ErrorWatcher.setup(telescope)
-
-app.listen(port)
+export * from './api/DB.js'
+export * from './api/Telescope.js'
+export * from './api/WatcherEntry.js'

@@ -1,19 +1,10 @@
-import DatabaseDriver from "./DatabaseDriver.js"
+import DatabaseDriver, {WatcherData} from "./DatabaseDriver.js"
 import WatcherEntry, {WatcherEntryCollectionType, WatcherType} from "../WatcherEntry.js"
 import {RequestWatcherData} from "../watchers/RequestWatcher.js"
 import {ErrorWatcherData} from "../watchers/ErrorWatcher.js"
 import {DumpWatcherData} from "../watchers/DumpWatcher.js"
 import {LogWatcherData} from "../watchers/LogWatcher.js"
 import {ClientRequestWatcherData} from "../watchers/ClientRequestWatcher.js"
-
-export interface WatcherData
-{
-    requests: WatcherEntry<RequestWatcherData>[]
-    exceptions: WatcherEntry<ErrorWatcherData>[]
-    dumps: WatcherEntry<DumpWatcherData>[]
-    logs: WatcherEntry<LogWatcherData>[]
-    "client-requests": WatcherEntry<ClientRequestWatcherData>[]
-}
 
 export default class MemoryDriver implements DatabaseDriver
 {

@@ -1,4 +1,4 @@
-import express, {Express} from 'express'
+import express, {Express, NextFunction, Request, Response} from 'express'
 import DB, {Driver} from './DB.js'
 import {fileURLToPath} from 'url'
 import {dirname} from 'path'
@@ -24,7 +24,9 @@ export interface TelescopeOptions
     responseSizeLimit?: number
     paramsToHide?: string[]
     ignorePaths?: string[]
+    clientIgnoreUrls?: string[]
     ignoreErrors?: ErrorConstructor[]
+    isAuthorized?: (request: Request, response: Response, next: NextFunction) => void
 }
 
 export default class Telescope
@@ -50,6 +52,8 @@ export default class Telescope
         Telescope.config(options ?? {})
 
         const telescope = new Telescope(app)
+
+        app.use('/telescope', Telescope.isAuthorized)
 
         telescope.setUpApi()
         telescope.setUpStaticFiles()
@@ -84,6 +88,10 @@ export default class Telescope
             Telescope.enabledWatchers = options.enabledWatchers
         }
 
+        if(options.isAuthorized){
+            Telescope.isAuthorized = options.isAuthorized
+        }
+
         if (options.databaseDriver) {
             DB.driver = options.databaseDriver
         }
@@ -102,6 +110,10 @@ export default class Telescope
 
         if(options.ignoreErrors){
             ErrorWatcher.ignoreErrors = options.ignoreErrors
+        }
+
+        if(options.clientIgnoreUrls){
+            ClientRequestWatcher.ignoreUrls = options.clientIgnoreUrls
         }
     }
 
@@ -157,5 +169,16 @@ export default class Telescope
         })
 
         this.app.get('/telescope/', (request, response) => response.redirect('/telescope/requests'))
+    }
+
+    private static isAuthorized(request: Request, response: Response, next: NextFunction): void
+    {
+        if(process.env.NODE_ENV === "production"){
+            response.status(403).send('Forbidden')
+
+            return
+        }
+
+        next()
     }
 }

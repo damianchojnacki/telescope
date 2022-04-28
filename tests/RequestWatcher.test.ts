@@ -26,7 +26,7 @@ describe('RequestWatcher', () => {
 
         const entry = (await DB.requests().get())[0]
 
-        expect(entry).not.toBeNull()
+        expect(entry).not.toBeUndefined()
         expect(entry.type).toEqual('request')
         expect(entry.content.hostname).toEqual(hostname())
         expect(entry.content.method).toEqual(HTTPMethod.GET)
@@ -164,7 +164,7 @@ describe('RequestWatcher', () => {
 
         const entries = (await DB.requests().get())
 
-        expect(entries.length).toEqual(1)
+        expect(entries).toHaveLength(1)
         expect(entries[0].content.uri).toEqual('/')
     }
 })

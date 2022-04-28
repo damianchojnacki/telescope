@@ -43,7 +43,7 @@ export default class RequestWatcher
 {
     public static entryType = WatcherEntryCollectionType.request
 
-    public static paramsToHide: string[] = ['password', 'token', 'secret']
+    public static paramsToHide: string[] = ['password', 'token', '_csrf']
     public static ignorePaths: string[] = []
     public static responseSizeLimit = 64
 

@@ -1,16 +1,16 @@
 {
   "name": "@damianchojnacki/telescope",
   "version": "1.0.0",
-  "exports": "./index.js",
+  "exports": "./dist/index.js",
   "type": "module",
-  "main": "index.js",
+  "main": "./dist/index.js",
   "description": "An elegant debug assistant for Node.js (based on Laravel Telescope).",
   "engines": {
     "node": "^12.20.0 || ^14.13.1 || >=16.0.0"
   },
   "scripts": {
-    "start": "ts-node --esm ./src/index.ts",
-    "dev": "nodemon --esm ./src/index.ts",
+    "start": "ts-node --esm src/main.ts",
+    "dev": "nodemon --esm src/main.ts",
     "test": "jest"
   },
   "nodemonConfig": {
@@ -21,7 +21,7 @@
   "author": "Damian Chojnacki <damianchojnacki@op.pl> (https://damianchojnacki.com)",
   "license": "MIT",
   "dependencies": {
-    "axios": "^0.26.1",
+    "axios": "^0.27.2",
     "express": "^4.17.3",
     "lowdb": "^3.0.0",
     "uuid": "^8.3.2"
@@ -34,6 +34,7 @@
     "@types/node": "^17.0.25",
     "@types/supertest": "^2.0.12",
     "@types/uuid": "^8.3.4",
+    "axios-mock-adapter": "^1.20.0",
     "babel-jest": "^28.0.2",
     "body-parser": "^1.20.0",
     "jest": "^27.5.1",

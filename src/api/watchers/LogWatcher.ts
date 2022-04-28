@@ -54,8 +54,10 @@ export default class LogWatcher
         {
             oldLog(...data)
 
-            data[0] = data[0].replaceAll('[32m', '')
-            data[0] = data[0].replaceAll('[39m', '')
+            if(typeof data[0] == 'string') {
+                data[0] = data[0].split('[32m').join('')
+                data[0] = data[0].split('[39m').join('')
+            }
 
             const watcher = new LogWatcher(data, LogLevel.INFO, telescope.batchId)
 
@@ -97,7 +99,7 @@ export default class LogWatcher
     {
         let message = data.shift()
 
-        if (message ! instanceof String) {
+        if (typeof message !== 'string') {
             message = JSON.stringify(message, JSONFileSyncAdapter.getRefReplacer())
         }
 

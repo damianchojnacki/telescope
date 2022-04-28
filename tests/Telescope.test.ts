@@ -75,4 +75,30 @@ describe('Telescope', () => {
             .get(`/telescope`)
             .expect('Location', '/telescope/requests' , done)
     })
+
+    it('authorizes access', (done) => {
+        process.env.NODE_ENV = 'production'
+
+        const app = express()
+
+        Telescope.setup(app)
+
+        request(app)
+            .get(`/telescope`)
+            .expect(403, done)
+    })
+
+    it('can customize authorization', (done) => {
+        process.env.NODE_ENV = 'production'
+
+        const app = express()
+
+        Telescope.setup(app, {
+            isAuthorized: (request, response, next) => next()
+        })
+
+        request(app)
+            .get(`/telescope/requests`)
+            .expect(200, done)
+    })
 })
