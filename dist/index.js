@@ -1,4 +1,4 @@
-import Telescope from "./api/Telescope";
+import Telescope from "./api/Telescope.js";
 export default Telescope;
 export * from './api/drivers/DatabaseDriver.js';
 export * from './api/drivers/JSONFileSyncAdapter.js';

@@ -94,7 +94,7 @@ export default class Telescope {
         }));
     }
     setUpStaticFiles() {
-        const dir = process.cwd() + '/dist/';
+        const dir = process.cwd() + '/node_modules/@damianchojnacki/telescope/dist/';
         this.app.use('/telescope/app.js', express.static(dir + "app.js"));
         this.app.use('/telescope/app.css', express.static(dir + "app.css"));
         this.app.use('/telescope/app-dark.css', express.static(dir + "app-dark.css"));
