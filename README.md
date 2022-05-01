@@ -124,9 +124,9 @@ Telescope.setup(app, {
         TypeError
     ],
     isAuthorized: (request, response, next) => {
-        if(request.session.token !== 'someSecretToken'){
-            response.status(403).send('Access denied')
-            
+        if(!request.isAuthenticated()){
+            response.redirect('/login')
+
             return
         }
         

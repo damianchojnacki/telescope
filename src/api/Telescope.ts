@@ -38,7 +38,7 @@ export default class Telescope
         ErrorWatcher,
         ClientRequestWatcher,
         DumpWatcher,
-        //LogWatcher
+        LogWatcher
     ]
 
     public app: Express
