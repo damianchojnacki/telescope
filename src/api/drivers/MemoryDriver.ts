@@ -1,10 +1,5 @@
 import DatabaseDriver, {WatcherData} from "./DatabaseDriver.js"
 import WatcherEntry, {WatcherEntryCollectionType, WatcherType} from "../WatcherEntry.js"
-import {RequestWatcherData} from "../watchers/RequestWatcher.js"
-import {ErrorWatcherData} from "../watchers/ErrorWatcher.js"
-import {DumpWatcherData} from "../watchers/DumpWatcher.js"
-import {LogWatcherData} from "../watchers/LogWatcher.js"
-import {ClientRequestWatcherData} from "../watchers/ClientRequestWatcher.js"
 
 export default class MemoryDriver implements DatabaseDriver
 {
@@ -35,8 +30,7 @@ export default class MemoryDriver implements DatabaseDriver
     {
         const batch: WatcherEntry<any>[] = []
 
-        Object.keys(this.db).forEach((key) =>
-        {
+        Object.keys(this.db).forEach((key) => {
             // @ts-ignore
             batch.push(this.db[key])
         })

@@ -1,16 +1,31 @@
 {
   "name": "@damianchojnacki/telescope",
-  "version": "1.0.0",
-  "exports": "./dist/index.js",
-  "type": "module",
-  "main": "./dist/index.js",
   "description": "An elegant debug assistant for Node.js (based on Laravel Telescope).",
+  "author": "Damian Chojnacki <damianchojnacki@op.pl> (https://damianchojnacki.com)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/damianchojnacki/telescope.git"
+  },
+  "version": "1.0.2",
+  "type": "module",
+  "module": "./dist/esm/index.js",
+  "main": "./dist/cjs/index.js",
+  "types": "./dist/esm/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js",
+      "default": "./dist/cjs/index.js"
+    }
+  },
   "engines": {
     "node": "^12.20.0 || ^14.13.1 || >=16.0.0"
   },
   "scripts": {
-    "start": "ts-node --esm src/main.ts",
-    "dev": "nodemon --esm src/main.ts",
+    "start": "ts-node --esm src/example/index.ts",
+    "dev": "nodemon --esm src/example/index.ts",
+    "build": "tsc -p tsconfig.cjs.json && tsc -p tsconfig.esm.json && ./bin/build-types.sh",
     "test": "jest"
   },
   "nodemonConfig": {
@@ -18,12 +33,9 @@
       "./db.json"
     ]
   },
-  "author": "Damian Chojnacki <damianchojnacki@op.pl> (https://damianchojnacki.com)",
-  "license": "MIT",
   "dependencies": {
     "axios": "^0.27.2",
     "express": "^4.17.3",
-    "lowdb": "^3.0.0",
     "uuid": "^8.3.2"
   },
   "devDependencies": {

@@ -3,9 +3,10 @@ import {IncomingHttpHeaders} from "http"
 import DB from "../DB.js"
 import WatcherEntry, {WatcherEntryCollectionType, WatcherEntryDataType} from "../WatcherEntry.js"
 import {hostname} from "os"
-import {JSONFileSyncAdapter} from "../drivers/JSONFileSyncAdapter.js"
+import JSONFileSyncAdapter from "../drivers/JSONFileSyncAdapter.js"
 
-export enum HTTPMethod{
+export enum HTTPMethod
+{
     GET = "GET",
     HEAD = "HEAD",
     POST = "POST",

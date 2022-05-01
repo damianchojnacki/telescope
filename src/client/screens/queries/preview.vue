@@ -1,7 +1,7 @@
 <script type="text/ecmascript-6">
     import hljs from 'highlight.js/lib/core';
     import sql from 'highlight.js/lib/languages/sql';
-    import { format } from 'sql-formatter';
+    import {format} from 'sql-formatter';
 
     hljs.registerLanguage('sql', sql);
 

@@ -1,75 +1,59 @@
 import DatabaseDriver, {WatcherData} from "./DatabaseDriver.js"
-import {LowSync} from 'lowdb'
-import {dirname} from "path"
-import {fileURLToPath} from "url"
 import {unlinkSync} from "fs"
 import WatcherEntry, {WatcherEntryCollectionType, WatcherType} from "../WatcherEntry.js"
-import {RequestWatcherData} from "../watchers/RequestWatcher.js"
-import {ErrorWatcherData} from "../watchers/ErrorWatcher.js"
-import {DumpWatcherData} from "../watchers/DumpWatcher.js"
-import {LogWatcherData} from "../watchers/LogWatcher.js"
-import {ClientRequestWatcherData} from "../watchers/ClientRequestWatcher.js"
-import {JSONFileSyncAdapter} from "./JSONFileSyncAdapter.js"
+import JSONFileSyncAdapter from "./JSONFileSyncAdapter.js"
 
 export default class LowDriver implements DatabaseDriver
 {
-    private db: LowSync<WatcherData>
+    private adapter: JSONFileSyncAdapter<WatcherData>
+    private db: WatcherData = {
+        requests: [],
+        exceptions: [],
+        dumps: [],
+        logs: [],
+        "client-requests": [],
+    }
 
     constructor()
     {
-        const adapter = new JSONFileSyncAdapter<WatcherData>('db.json')
+        this.adapter = new JSONFileSyncAdapter<WatcherData>('db.json')
 
-        this.db = new LowSync(adapter)
+        this.adapter.read()
+    }
+
+    private read()
+    {
+        this.db = this.adapter.read() ?? this.db
+    }
+
+    private write()
+    {
+        this.adapter.write(this.db)
     }
 
     public async get<T extends WatcherType>(name: WatcherEntryCollectionType, take?: number): Promise<WatcherEntry<T>[]>
     {
-        this.db.read()
+        this.read()
 
-        this.db.data ||= {
-            requests: [],
-            exceptions: [],
-            dumps: [],
-            logs: [],
-            "client-requests": [],
-        }
-
-        return (take ? this.db.data[name].slice(0, take) : this.db.data[name]) ?? []
+        return (take ? this.db[name].slice(0, take) : this.db[name]) ?? []
     }
 
     public async find<T extends WatcherType>(name: WatcherEntryCollectionType, id: string): Promise<WatcherEntry<T> | undefined>
     {
-        this.db.read()
+        this.read()
 
-        this.db.data ||= {
-            requests: [],
-            exceptions: [],
-            dumps: [],
-            logs: [],
-            "client-requests": [],
-        }
-
-        return this.db.data[name]?.find((entry: WatcherEntry<T>) => entry.id === id)
+        return this.db[name].find((entry: WatcherEntry<T>) => entry.id === id)
     }
 
     public async batch(batchId: string): Promise<WatcherEntry<any>[]>
     {
-        this.db.read()
-
-        this.db.data ||= {
-            requests: [],
-            exceptions: [],
-            dumps: [],
-            logs: [],
-            "client-requests": [],
-        }
+        this.read()
 
         const batch: WatcherEntry<any>[] = []
 
-        Object.keys(this.db.data).forEach((key) =>
-        {
+        Object.keys(this.db).forEach((key) => {
             // @ts-ignore
-            batch.push(this.db.data[key])
+            batch.push(this.db[key])
         })
 
         return batch.flat().filter((entry) => entry.batchId === batchId)
@@ -77,37 +61,21 @@ export default class LowDriver implements DatabaseDriver
 
     public async save<T extends keyof WatcherType>(name: WatcherEntryCollectionType, data: WatcherEntry<T>)
     {
-        this.db.read()
+        this.read()
 
-        this.db.data ||= {
-            requests: [],
-            exceptions: [],
-            dumps: [],
-            logs: [],
-            "client-requests": [],
-        }
+        this.db[name].unshift(data)
 
-        this.db.data[name]?.unshift(data)
-
-        this.db.write()
+        this.write()
     }
 
     public async update<T extends keyof WatcherType>(name: WatcherEntryCollectionType, index: number, toUpdate: WatcherEntry<T>)
     {
-        this.db.read()
+        this.read()
 
-        this.db.data ||= {
-            requests: [],
-            exceptions: [],
-            dumps: [],
-            logs: [],
-            "client-requests": [],
-        }
+        this.db[name].splice(index, 1)
+        this.db[name].unshift(toUpdate)
 
-        this.db.data[name].splice(index, 1)
-        this.db.data[name]?.unshift(toUpdate)
-
-        this.db.write()
+        this.write()
     }
 
     public async truncate()

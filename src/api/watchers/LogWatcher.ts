@@ -2,7 +2,7 @@ import DB from "../DB.js"
 import WatcherEntry, {WatcherEntryCollectionType, WatcherEntryDataType} from "../WatcherEntry.js"
 import {hostname} from "os"
 import Telescope from "../Telescope.js"
-import {JSONFileSyncAdapter} from "../drivers/JSONFileSyncAdapter.js"
+import JSONFileSyncAdapter from "../drivers/JSONFileSyncAdapter.js"
 
 export enum LogLevel
 {
@@ -50,11 +50,10 @@ export default class LogWatcher
     {
         const oldLog = console.log
 
-        console.log = (...data: any[]) =>
-        {
+        console.log = (...data: any[]) => {
             oldLog(...data)
 
-            if(typeof data[0] == 'string') {
+            if (typeof data[0] == 'string') {
                 data[0] = data[0].split('[32m').join('')
                 data[0] = data[0].split('[39m').join('')
             }
@@ -66,8 +65,7 @@ export default class LogWatcher
 
         const oldWarn = console.warn
 
-        console.warn = (...data: any[]) =>
-        {
+        console.warn = (...data: any[]) => {
             oldWarn(...data)
 
             const watcher = new LogWatcher(data, LogLevel.WARNING, telescope.batchId)

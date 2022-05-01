@@ -26,7 +26,7 @@ npm i @damianchojnacki/telescope
 Setup Telescope BEFORE any route. Setup ErrorWatcher if needed at the end.
 
 ```javascript
-import Telescope from './api/Telescope.js';
+import Telescope, { ErrorWatcher } from '@damianchojnacki/telescope'
 
 const app = express()
 
@@ -68,7 +68,7 @@ Logs unhandled errors.
 Saves dump messages.
 
 ```javascript
-import {dump} from "./DumpWatcher";
+import { dump } from "@damianchojnacki/telescope"
 
 dump("foo")
 ```
@@ -103,7 +103,7 @@ app.get('/', async (request, response, next) => {
 #### Enabled watchers
 
 ```javascript
-const telescope = Telescope.setup(app, {
+Telescope.setup(app, {
     enabledWatchers: {
         RequestWatcher,
         ErrorWatcher,
@@ -151,7 +151,7 @@ If paramsToFilter matches request param it will be converted to *******.
 #### Database drivers
 Customizing database driver:
 ```javascript
-import MemoryDriver from "./api/drivers/MemoryDriver.js"
+import { MemoryDriver } from "@damianchojnacki/telescope"
 
 const telescope = Telescope.setup(app, {
     databaseDriver: MemoryDriver

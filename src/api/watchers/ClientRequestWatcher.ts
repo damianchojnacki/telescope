@@ -16,7 +16,7 @@ export interface ClientRequestWatcherData
     response: any
 }
 
-export class ClientRequestEntry extends WatcherEntry<ClientRequestWatcherData>
+export class ClientRequestWatcherEntry extends WatcherEntry<ClientRequestWatcherData>
 {
     constructor(data: ClientRequestWatcherData, batchId?: string)
     {
@@ -51,7 +51,7 @@ export default class ClientRequestWatcher
         })
 
         axios.interceptors.response.use(async (response) => {
-            if(request){
+            if (request) {
                 const watcher = new ClientRequestWatcher(request, response, telescope.batchId)
 
                 !watcher.shouldIgnore() && await watcher.save()
@@ -61,7 +61,7 @@ export default class ClientRequestWatcher
 
             return response
         }, async (error: any) => {
-            if(request){
+            if (request) {
                 const watcher = new ClientRequestWatcher(request, error.response, telescope.batchId)
 
                 !watcher.shouldIgnore() && await watcher.save()
@@ -75,7 +75,7 @@ export default class ClientRequestWatcher
 
     public async save()
     {
-        const entry = new ClientRequestEntry({
+        const entry = new ClientRequestWatcherEntry({
             hostname: hostname(),
             method: this.request.method?.toUpperCase() ?? '',
             uri: this.request.url ?? '',

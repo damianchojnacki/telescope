@@ -1,16 +1,20 @@
 {
-    "compilerOptions": {                        
-      "target": "es6",
-      "module": "ESNext",                           
-      "outDir": "./dist",
-      "rootDir": "./src",
-      "strict": true,
-      "moduleResolution": "node",
-      "esModuleInterop": true
+    "compilerOptions": {
+        "target": "es6",
+        "module": "ESNext",
+        "outDir": "./dist",
+        "rootDir": "./src",
+        "strict": true,
+        "moduleResolution": "node",
+        "esModuleInterop": true
     },
-    "include": ["src/**/*", "tests/**/*"],
-    "exclude":[
-      "./node_modules",
-      "./src/client",
+    "include": [
+        "src/**/*",
+        "tests/**/*"
+    ],
+    "exclude": [
+        "./node_modules",
+        "./src/client",
+        "./dist"
     ]
-  }
+}

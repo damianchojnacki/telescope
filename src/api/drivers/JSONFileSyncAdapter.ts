@@ -1,14 +1,31 @@
-import {SyncAdapter, TextFileSync} from "lowdb"
+import {TextFileSync} from "./TextFileSync.js"
 
-export class JSONFileSyncAdapter<T> implements SyncAdapter<T> {
+export default class JSONFileSyncAdapter<T>
+{
     #adapter: TextFileSync
 
-    constructor(filename: string) {
+    constructor(filename: string)
+    {
         this.#adapter = new TextFileSync(filename)
     }
 
-    read(): T | null {
+    static getRefReplacer = () => {
+        const seen = new WeakSet()
+        return (key: string, value: any) => {
+            if (typeof value === "object" && value !== null) {
+                if (seen.has(value)) {
+                    return '[Circular]'
+                }
+                seen.add(value)
+            }
+            return value
+        }
+    }
+
+    read(): T | null
+    {
         const data = this.#adapter.read()
+
         if (data === null) {
             return null
         } else {
@@ -16,20 +33,8 @@ export class JSONFileSyncAdapter<T> implements SyncAdapter<T> {
         }
     }
 
-    static getRefReplacer = () => {
-        const seen = new WeakSet();
-        return (key: string, value: any) => {
-            if (typeof value === "object" && value !== null) {
-                if (seen.has(value)) {
-                    return '[Circular]';
-                }
-                seen.add(value);
-            }
-            return value;
-        };
-    };
-
-    write(obj: T): void {
+    write(obj: T): void
+    {
         this.#adapter.write(JSON.stringify(obj, JSONFileSyncAdapter.getRefReplacer(), 2))
     }
 }

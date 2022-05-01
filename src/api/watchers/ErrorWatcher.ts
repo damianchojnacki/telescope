@@ -1,6 +1,6 @@
 import {NextFunction, Request, Response} from "express"
 import DB from "../DB.js"
-import {readFileSync} from "fs"
+import {existsSync, readFileSync} from "fs"
 import WatcherEntry, {WatcherEntryCollectionType, WatcherEntryDataType} from "../WatcherEntry.js"
 import Telescope from "../Telescope.js"
 import {hostname} from "os"
@@ -33,20 +33,30 @@ export default class ErrorWatcher
     private error: Error
     private batchId?: string
 
+    constructor(error: Error, batchId?: string)
+    {
+        this.error = error
+        this.batchId = batchId
+    }
+
     public static setup(telescope: Telescope)
     {
         telescope.app.use(async (error: Error, request: Request, response: Response, next: NextFunction) => {
-            const watcher = new ErrorWatcher(error, telescope.batchId)
+            try{
+                const watcher = new ErrorWatcher(error, telescope.batchId)
 
-            if(watcher.shouldIgnore()){
+                if (watcher.shouldIgnore()) {
+                    next(error)
+
+                    return
+                }
+
+                await watcher.saveOrUpdate()
+
                 next(error)
-
-                return
+            } catch(e) {
+                next(e)
             }
-
-            await watcher.saveOrUpdate()
-
-            next(error)
         })
 
         // catch async errors
@@ -54,7 +64,7 @@ export default class ErrorWatcher
             .on('uncaughtException', async error => {
                 const watcher = new ErrorWatcher(error, telescope.batchId)
 
-                if(watcher.shouldIgnore()){
+                if (watcher.shouldIgnore()) {
                     return
                 }
 
@@ -66,12 +76,6 @@ export default class ErrorWatcher
             })
     }
 
-    constructor(error: Error, batchId?: string)
-    {
-        this.error = error
-        this.batchId = batchId
-    }
-
     private async getSameError()
     {
         const errors = (await DB.errors().get())
@@ -79,7 +83,7 @@ export default class ErrorWatcher
         const index = errors.findIndex(error => this.isSameError(error))
         const error = errors.find(error => this.isSameError(error))
 
-        return {error, index};
+        return {error, index}
     }
 
     private async saveOrUpdate()
@@ -126,14 +130,13 @@ export default class ErrorWatcher
 
     private getLinePreview(): string[]
     {
-        const path = this.getFile().split(':')[0] ?? ''
+        const path = this.getFile().replace('file://', '').split(':')[0] ?? ''
 
         const preview: any = {}
 
         const errorLine = this.getLine()
 
-        path && readFileSync(path).toString().split('\n').forEach((line, index) =>
-        {
+        path && existsSync(path) && readFileSync(path).toString().split('\n').forEach((line, index) => {
             if (index > errorLine - 10 && index < errorLine + 10) {
                 preview[index + 1] = line
             }
@@ -148,8 +151,7 @@ export default class ErrorWatcher
 
         lines.shift()
 
-        return lines.map((line) =>
-        {
+        return lines.map((line) => {
             const counters = line.split(':')
 
             return {

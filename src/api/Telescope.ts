@@ -1,7 +1,5 @@
 import express, {Express, NextFunction, Request, Response} from 'express'
 import DB, {Driver} from './DB.js'
-import {fileURLToPath} from 'url'
-import {dirname} from 'path'
 import ClientRequestWatcher from "./watchers/ClientRequestWatcher.js"
 import LogWatcher from "./watchers/LogWatcher.js"
 import RequestWatcher from "./watchers/RequestWatcher.js"
@@ -9,8 +7,12 @@ import {v4 as uuidv4} from "uuid"
 import {WatcherEntryCollectionType} from "./WatcherEntry.js"
 import ErrorWatcher from "./watchers/ErrorWatcher.js"
 import DumpWatcher from "./watchers/DumpWatcher.js"
+import {existsSync} from "fs"
+import {fileURLToPath, resolve} from "url"
+import * as url from "url"
+import path from "path"
 
-type Watcher =
+export type Watcher =
     typeof RequestWatcher |
     typeof ErrorWatcher |
     typeof ClientRequestWatcher |
@@ -36,7 +38,7 @@ export default class Telescope
         ErrorWatcher,
         ClientRequestWatcher,
         DumpWatcher,
-        LogWatcher
+        //LogWatcher
     ]
 
     public app: Express
@@ -58,28 +60,22 @@ export default class Telescope
         telescope.setUpApi()
         telescope.setUpStaticFiles()
 
-        app.use((request, response, next) =>
-        {
+        app.use((request, response, next) => {
             telescope.batchId = uuidv4()
 
             Telescope.enabledWatchers.includes(RequestWatcher)
-                && RequestWatcher.capture(request, response, telescope.batchId)
+            && RequestWatcher.capture(request, response, telescope.batchId)
 
             next()
         })
 
         Telescope.enabledWatchers.includes(ClientRequestWatcher)
-            && ClientRequestWatcher.capture(telescope)
+        && ClientRequestWatcher.capture(telescope)
 
         Telescope.enabledWatchers.includes(LogWatcher)
-            && LogWatcher.capture(telescope)
+        && LogWatcher.capture(telescope)
 
         return telescope
-    }
-
-    public getEnabledWatchers(): string[]
-    {
-        return Telescope.enabledWatchers.map((watcher) => watcher.entryType)
     }
 
     private static config(options: TelescopeOptions)
@@ -88,7 +84,7 @@ export default class Telescope
             Telescope.enabledWatchers = options.enabledWatchers
         }
 
-        if(options.isAuthorized){
+        if (options.isAuthorized) {
             Telescope.isAuthorized = options.isAuthorized
         }
 
@@ -96,31 +92,46 @@ export default class Telescope
             DB.driver = options.databaseDriver
         }
 
-        if(options.responseSizeLimit){
+        if (options.responseSizeLimit) {
             RequestWatcher.responseSizeLimit = options.responseSizeLimit
         }
 
-        if(options.ignorePaths){
+        if (options.ignorePaths) {
             RequestWatcher.ignorePaths = options.ignorePaths
         }
 
-        if(options.paramsToHide){
+        if (options.paramsToHide) {
             RequestWatcher.paramsToHide = options.paramsToHide
         }
 
-        if(options.ignoreErrors){
+        if (options.ignoreErrors) {
             ErrorWatcher.ignoreErrors = options.ignoreErrors
         }
 
-        if(options.clientIgnoreUrls){
+        if (options.clientIgnoreUrls) {
             ClientRequestWatcher.ignoreUrls = options.clientIgnoreUrls
         }
     }
 
+    private static isAuthorized(request: Request, response: Response, next: NextFunction): void
+    {
+        if (process.env.NODE_ENV === "production") {
+            response.status(403).send('Forbidden')
+
+            return
+        }
+
+        next()
+    }
+
+    public getEnabledWatchers(): string[]
+    {
+        return Telescope.enabledWatchers.map((watcher) => watcher.entryType)
+    }
+
     private setUpApi()
     {
-        this.app.post('/telescope/telescope-api/:entry', async (request, response) =>
-        {
+        this.app.post('/telescope/telescope-api/:entry', async (request, response) => {
             const entries = await DB.entry(request.params.entry as WatcherEntryCollectionType).get(Number(request.query.take ?? 50))
 
             response.json({
@@ -129,8 +140,7 @@ export default class Telescope
             })
         })
 
-        this.app.get('/telescope/telescope-api/:entry/:id', async (request, response) =>
-        {
+        this.app.get('/telescope/telescope-api/:entry/:id', async (request, response) => {
             const entry = await DB.entry(request.params.entry as WatcherEntryCollectionType).find(request.params.id)
 
             response.json({
@@ -139,24 +149,33 @@ export default class Telescope
             })
         })
 
-        this.app.delete("/telescope/telescope-api/entries", async (request, response) =>
-        {
+        this.app.delete("/telescope/telescope-api/entries", async (request, response) => {
             await DB.truncate()
 
             response.send("OK")
         })
 
-        this.app.get("/telescope/telescope-api/entries", async (request, response) =>
-        {
+        this.app.get("/telescope/telescope-api/entries", async (request, response) => {
             response.json({
                 enabled: this.getEnabledWatchers()
             })
         })
     }
 
+    private resolveDir(): string
+    {
+        let dir = process.cwd() + '/node_modules/@damianchojnacki/telescope/dist/'
+
+        if(!existsSync(dir + 'index.html')){
+            dir = path.join(process.cwd(), '/dist/')
+        }
+
+        return dir
+    }
+
     private setUpStaticFiles()
     {
-        const dir = process.cwd() + '/node_modules/@damianchojnacki/telescope/dist/'
+        const dir = this.resolveDir()
 
         this.app.use('/telescope/app.js', express.static(dir + "app.js"))
         this.app.use('/telescope/app.css', express.static(dir + "app.css"))
@@ -169,16 +188,5 @@ export default class Telescope
         })
 
         this.app.get('/telescope/', (request, response) => response.redirect('/telescope/requests'))
-    }
-
-    private static isAuthorized(request: Request, response: Response, next: NextFunction): void
-    {
-        if(process.env.NODE_ENV === "production"){
-            response.status(403).send('Forbidden')
-
-            return
-        }
-
-        next()
     }
 }

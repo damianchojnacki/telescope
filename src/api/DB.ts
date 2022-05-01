@@ -6,17 +6,8 @@ export type Driver = new () => DatabaseDriver;
 
 class DB
 {
-    private static db: DatabaseDriver
     public static driver: Driver = LowDriver
-
-    private static async get(): Promise<DatabaseDriver>
-    {
-        if (!DB.db) {
-            new DB()
-        }
-
-        return DB.db
-    }
+    private static db: DatabaseDriver
 
     private constructor()
     {
@@ -66,6 +57,15 @@ class DB
     public static clientRequests()
     {
         return this.entry(WatcherEntryCollectionType.clientRequest)
+    }
+
+    private static async get(): Promise<DatabaseDriver>
+    {
+        if (!DB.db) {
+            new DB()
+        }
+
+        return DB.db
     }
 }
 
