@@ -2,7 +2,7 @@ import express, {Express, NextFunction, Request, Response} from 'express'
 import DB, {Driver} from './DB.js'
 import ClientRequestWatcher from "./watchers/ClientRequestWatcher.js"
 import LogWatcher from "./watchers/LogWatcher.js"
-import RequestWatcher from "./watchers/RequestWatcher.js"
+import RequestWatcher, {GetUserFunction} from "./watchers/RequestWatcher.js"
 import {v4 as uuidv4} from "uuid"
 import {WatcherEntryCollectionType} from "./WatcherEntry.js"
 import ErrorWatcher from "./watchers/ErrorWatcher.js"
@@ -29,6 +29,7 @@ export interface TelescopeOptions
     clientIgnoreUrls?: string[]
     ignoreErrors?: ErrorConstructor[]
     isAuthorized?: (request: Request, response: Response, next: NextFunction) => void
+    getUser?: GetUserFunction
 }
 
 export default class Telescope
@@ -64,7 +65,7 @@ export default class Telescope
             telescope.batchId = uuidv4()
 
             Telescope.enabledWatchers.includes(RequestWatcher)
-            && RequestWatcher.capture(request, response, telescope.batchId)
+            && RequestWatcher.capture(request, response, telescope.batchId, options?.getUser)
 
             next()
         })

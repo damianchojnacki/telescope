@@ -167,4 +167,27 @@ describe('RequestWatcher', () => {
         expect(entries).toHaveLength(1)
         expect(entries[0].content.uri).toEqual('/')
     }
+
+    it('saves authenticated user', async () => {
+        const app = express()
+
+        const user = {
+            id: 1,
+            name: 'John',
+            email: 'user@example.com'
+        }
+
+        Telescope.setup(app, {
+            getUser: () => user
+        })
+
+        app.get('/', (request, response) => response.send('Hello world'))
+
+        await request(app)
+            .get('/')
+
+        const entry = (await DB.requests().get())[0]
+
+        expect(entry.content.user).toEqual(user)
+    })
 })

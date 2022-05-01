@@ -35,7 +35,7 @@ class Telescope {
         app.use((request, response, next) => {
             telescope.batchId = (0, uuid_1.v4)();
             Telescope.enabledWatchers.includes(RequestWatcher_js_1.default)
-                && RequestWatcher_js_1.default.capture(request, response, telescope.batchId);
+                && RequestWatcher_js_1.default.capture(request, response, telescope.batchId, options === null || options === void 0 ? void 0 : options.getUser);
             next();
         });
         Telescope.enabledWatchers.includes(ClientRequestWatcher_js_1.default)

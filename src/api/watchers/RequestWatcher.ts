@@ -15,6 +15,15 @@ export enum HTTPMethod
     DELETE = "DELETE",
 }
 
+export type GetUserFunction = (request: Request) => User
+
+export interface User
+{
+    id: string | number
+    name?: string
+    email?: string
+}
+
 export interface RequestWatcherData
 {
     hostname: string
@@ -29,6 +38,7 @@ export interface RequestWatcherData
     payload: object
     headers: IncomingHttpHeaders
     session?: object
+    user?: User
     response: any
 }
 
@@ -53,18 +63,20 @@ export default class RequestWatcher
     private response: Response
     private responseBody: any = ''
     private startTime: [number, number]
+    private getUser?: GetUserFunction
 
-    constructor(request: Request, response: Response, batchId?: string)
+    constructor(request: Request, response: Response, batchId?: string, getUser?: GetUserFunction)
     {
         this.batchId = batchId
         this.request = request
         this.response = response
         this.startTime = process.hrtime()
+        this.getUser = getUser
     }
 
-    public static capture(request: Request, response: Response, batchId?: string)
+    public static capture(request: Request, response: Response, batchId?: string, getUser?: GetUserFunction)
     {
-        const watcher = new RequestWatcher(request, response, batchId)
+        const watcher = new RequestWatcher(request, response, batchId, getUser)
 
         if (watcher.shouldIgnore()) {
             return
@@ -133,7 +145,7 @@ export default class RequestWatcher
         return JSON.stringify(content, JSONFileSyncAdapter.getRefReplacer()).length > (1000 * RequestWatcher.responseSizeLimit) ? 'Purged By Telescope' : content
     }
 
-    private save()
+    private async save()
     {
         const entry = new RequestWatcherEntry({
             hostname: hostname(),
@@ -146,6 +158,7 @@ export default class RequestWatcher
             payload: this.getPayload(),
             headers: this.request.headers,
             response: this.responseBody,
+            user: this.getUser ? await this.getUser(this.request) : undefined
         }, this.batchId)
 
         DB.requests().save(entry)

@@ -30,7 +30,7 @@ export default class Telescope {
         app.use((request, response, next) => {
             telescope.batchId = uuidv4();
             Telescope.enabledWatchers.includes(RequestWatcher)
-                && RequestWatcher.capture(request, response, telescope.batchId);
+                && RequestWatcher.capture(request, response, telescope.batchId, options === null || options === void 0 ? void 0 : options.getUser);
             next();
         });
         Telescope.enabledWatchers.includes(ClientRequestWatcher)

@@ -131,7 +131,8 @@ Telescope.setup(app, {
         }
         
         next()
-    }
+    },
+    getUser: (request) => request.user, // {id: 1, email: 'user@example.com', name: 'John'}
 })
 ```
 `enabledWatchers` - list of enabled watchers
@@ -147,6 +148,8 @@ If paramsToFilter matches request param it will be converted to *******.
 `ignoreErrors` - errors to ignore
 
 `isAuthorized` - be default telescope is disabled on production, if you want to change this behaviour you can provide custom isAuthorized function
+
+`getUser` - telescope will display provided user on the request preview page, id is required, name and email are optional
 
 #### Database drivers
 Customizing database driver:

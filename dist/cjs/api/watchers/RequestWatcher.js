@@ -22,6 +22,15 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -47,15 +56,16 @@ class RequestWatcherEntry extends WatcherEntry_js_1.default {
 }
 exports.RequestWatcherEntry = RequestWatcherEntry;
 class RequestWatcher {
-    constructor(request, response, batchId) {
+    constructor(request, response, batchId, getUser) {
         this.responseBody = '';
         this.batchId = batchId;
         this.request = request;
         this.response = response;
         this.startTime = process.hrtime();
+        this.getUser = getUser;
     }
-    static capture(request, response, batchId) {
-        const watcher = new RequestWatcher(request, response, batchId);
+    static capture(request, response, batchId, getUser) {
+        const watcher = new RequestWatcher(request, response, batchId, getUser);
         if (watcher.shouldIgnore()) {
             return;
         }
@@ -98,19 +108,22 @@ class RequestWatcher {
         return JSON.stringify(content, JSONFileSyncAdapter_js_1.default.getRefReplacer()).length > (1000 * RequestWatcher.responseSizeLimit) ? 'Purged By Telescope' : content;
     }
     save() {
-        const entry = new RequestWatcherEntry({
-            hostname: (0, os_1.hostname)(),
-            method: this.request.method,
-            uri: this.request.path,
-            response_status: this.response.statusCode,
-            duration: this.getDurationInMs(),
-            ip_address: this.request.ip,
-            memory: this.getMemoryUsage(),
-            payload: this.getPayload(),
-            headers: this.request.headers,
-            response: this.responseBody,
-        }, this.batchId);
-        DB_js_1.default.requests().save(entry);
+        return __awaiter(this, void 0, void 0, function* () {
+            const entry = new RequestWatcherEntry({
+                hostname: (0, os_1.hostname)(),
+                method: this.request.method,
+                uri: this.request.path,
+                response_status: this.response.statusCode,
+                duration: this.getDurationInMs(),
+                ip_address: this.request.ip,
+                memory: this.getMemoryUsage(),
+                payload: this.getPayload(),
+                headers: this.request.headers,
+                response: this.responseBody,
+                user: this.getUser ? yield this.getUser(this.request) : undefined
+            }, this.batchId);
+            DB_js_1.default.requests().save(entry);
+        });
     }
     shouldIgnore() {
         const checks = RequestWatcher.ignorePaths.map((path) => {

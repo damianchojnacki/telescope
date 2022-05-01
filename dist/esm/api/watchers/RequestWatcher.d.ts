@@ -10,6 +10,12 @@ export declare enum HTTPMethod {
     PATCH = "PATCH",
     DELETE = "DELETE"
 }
+export declare type GetUserFunction = (request: Request) => User;
+export interface User {
+    id: string | number;
+    name?: string;
+    email?: string;
+}
 export interface RequestWatcherData {
     hostname: string;
     method?: HTTPMethod;
@@ -23,6 +29,7 @@ export interface RequestWatcherData {
     payload: object;
     headers: IncomingHttpHeaders;
     session?: object;
+    user?: User;
     response: any;
 }
 export declare class RequestWatcherEntry extends WatcherEntry<RequestWatcherData> {
@@ -38,8 +45,9 @@ export default class RequestWatcher {
     private response;
     private responseBody;
     private startTime;
-    constructor(request: Request, response: Response, batchId?: string);
-    static capture(request: Request, response: Response, batchId?: string): void;
+    private getUser?;
+    constructor(request: Request, response: Response, batchId?: string, getUser?: GetUserFunction);
+    static capture(request: Request, response: Response, batchId?: string, getUser?: GetUserFunction): void;
     private getMemoryUsage;
     private getDurationInMs;
     private getPayload;

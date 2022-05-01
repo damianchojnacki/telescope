@@ -2,7 +2,7 @@ import { Express, NextFunction, Request, Response } from 'express';
 import { Driver } from './DB.js';
 import ClientRequestWatcher from "./watchers/ClientRequestWatcher.js";
 import LogWatcher from "./watchers/LogWatcher.js";
-import RequestWatcher from "./watchers/RequestWatcher.js";
+import RequestWatcher, { GetUserFunction } from "./watchers/RequestWatcher.js";
 import ErrorWatcher from "./watchers/ErrorWatcher.js";
 import DumpWatcher from "./watchers/DumpWatcher.js";
 export declare type Watcher = typeof RequestWatcher | typeof ErrorWatcher | typeof ClientRequestWatcher | typeof DumpWatcher | typeof LogWatcher;
@@ -15,6 +15,7 @@ export interface TelescopeOptions {
     clientIgnoreUrls?: string[];
     ignoreErrors?: ErrorConstructor[];
     isAuthorized?: (request: Request, response: Response, next: NextFunction) => void;
+    getUser?: GetUserFunction;
 }
 export default class Telescope {
     private static enabledWatchers;
