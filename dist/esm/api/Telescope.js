@@ -127,5 +127,5 @@ Telescope.enabledWatchers = [
     ErrorWatcher,
     ClientRequestWatcher,
     DumpWatcher,
-    //LogWatcher
+    LogWatcher
 ];

@@ -133,5 +133,5 @@ Telescope.enabledWatchers = [
     ErrorWatcher_js_1.default,
     ClientRequestWatcher_js_1.default,
     DumpWatcher_js_1.default,
-    //LogWatcher
+    LogWatcher_js_1.default
 ];
