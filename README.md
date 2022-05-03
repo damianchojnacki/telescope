@@ -38,6 +38,8 @@ app.get('/', (request, response) => {
 ErrorWatcher.setup(telescope)
 ```
 
+Now you can access telescope panel at `/telescope`.
+
 #### RequestWatcher
 
 Intercepts requests and responses.
@@ -71,8 +73,6 @@ import { dump } from "@damianchojnacki/telescope"
 
 dump("foo")
 ```
-
-You can access telescope panel at `/telescope`.
 
 ### 3. Note about ErrorWatcher (only express < 5.0.0)
 
