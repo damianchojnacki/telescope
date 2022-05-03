@@ -7,9 +7,8 @@
 ## Introduction
 Node.js Telescope is an elegant debug assistant based on Telescope for Laravel framework. 
 Telescope provides insight into the requests coming into your application, 
-exceptions, log entries, database queries, queued jobs, mail, notifications, 
-cache operations, scheduled tasks, variable dumps and more. Telescope makes a 
-wonderful companion to your local Laravel development environment.
+exceptions, console.log entries, variable dumps and more. Telescope makes a 
+wonderful companion to your local development environment.
 
 ### [Laravel Telescope](https://github.com/laravel/telescope)
 
@@ -72,6 +71,8 @@ import { dump } from "@damianchojnacki/telescope"
 
 dump("foo")
 ```
+
+You can access telescope panel at `/telescope`.
 
 ### 3. Note about ErrorWatcher (only express < 5.0.0)
 
