@@ -79,7 +79,7 @@ export default class Telescope
         return telescope
     }
 
-    private static config(options: TelescopeOptions)
+    public static config(options: TelescopeOptions)
     {
         if (options.enabledWatchers) {
             Telescope.enabledWatchers = options.enabledWatchers
@@ -125,7 +125,7 @@ export default class Telescope
         next()
     }
 
-    public getEnabledWatchers(): string[]
+    public static getEnabledWatchers(): string[]
     {
         return Telescope.enabledWatchers.map((watcher) => watcher.entryType)
     }
@@ -158,7 +158,7 @@ export default class Telescope
 
         this.app.get("/telescope/telescope-api/entries", async (request, response) => {
             response.json({
-                enabled: this.getEnabledWatchers()
+                enabled: Telescope.getEnabledWatchers()
             })
         })
     }
@@ -183,7 +183,7 @@ export default class Telescope
         this.app.use('/telescope/app-dark.css', express.static(dir + "app-dark.css"))
         this.app.use('/telescope/favicon.ico', express.static(dir + "favicon.ico"))
 
-        this.getEnabledWatchers().forEach((watcher) => {
+        Telescope.getEnabledWatchers().forEach((watcher) => {
             this.app.use(`/telescope/${watcher}`, express.static(dir + 'index.html'))
             this.app.use(`/telescope/${watcher}/:id`, express.static(dir + 'index.html'))
         })

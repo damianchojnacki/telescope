@@ -72,7 +72,7 @@ export default class Telescope {
         }
         next();
     }
-    getEnabledWatchers() {
+    static getEnabledWatchers() {
         return Telescope.enabledWatchers.map((watcher) => watcher.entryType);
     }
     setUpApi() {
@@ -98,7 +98,7 @@ export default class Telescope {
         }));
         this.app.get("/telescope/telescope-api/entries", (request, response) => __awaiter(this, void 0, void 0, function* () {
             response.json({
-                enabled: this.getEnabledWatchers()
+                enabled: Telescope.getEnabledWatchers()
             });
         }));
     }
@@ -115,7 +115,7 @@ export default class Telescope {
         this.app.use('/telescope/app.css', express.static(dir + "app.css"));
         this.app.use('/telescope/app-dark.css', express.static(dir + "app-dark.css"));
         this.app.use('/telescope/favicon.ico', express.static(dir + "favicon.ico"));
-        this.getEnabledWatchers().forEach((watcher) => {
+        Telescope.getEnabledWatchers().forEach((watcher) => {
             this.app.use(`/telescope/${watcher}`, express.static(dir + 'index.html'));
             this.app.use(`/telescope/${watcher}/:id`, express.static(dir + 'index.html'));
         });

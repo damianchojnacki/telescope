@@ -25,7 +25,7 @@ describe('Telescope', () => {
         })
 
         expect(
-            telescope.getEnabledWatchers()
+            Telescope.getEnabledWatchers()
         ).toEqual([
             WatcherEntryCollectionType.request,
             WatcherEntryCollectionType.exception
@@ -59,7 +59,7 @@ describe('Telescope', () => {
 
         const telescope = Telescope.setup(app)
 
-        telescope.getEnabledWatchers().forEach((watcher) => {
+        Telescope.getEnabledWatchers().forEach((watcher) => {
             request(app)
                 .get(`/telescope/${watcher}`)
                 .expect(200, done)

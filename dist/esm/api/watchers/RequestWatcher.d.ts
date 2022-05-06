@@ -10,7 +10,7 @@ export declare enum HTTPMethod {
     PATCH = "PATCH",
     DELETE = "DELETE"
 }
-export declare type GetUserFunction = (request: Request) => User;
+export declare type GetUserFunction = (request: any) => User | Promise<User>;
 export interface User {
     id: string | number;
     name?: string;
@@ -43,9 +43,10 @@ export default class RequestWatcher {
     private batchId?;
     private request;
     private response;
-    private responseBody;
+    responseBody: any;
     private startTime;
     private getUser?;
+    controllerAction?: string;
     constructor(request: Request, response: Response, batchId?: string, getUser?: GetUserFunction);
     static capture(request: Request, response: Response, batchId?: string, getUser?: GetUserFunction): void;
     private getMemoryUsage;
@@ -55,6 +56,6 @@ export default class RequestWatcher {
     private getFilteredBody;
     private filter;
     private contentWithinLimits;
-    private save;
-    private shouldIgnore;
+    save(): Promise<void>;
+    shouldIgnore(): boolean;
 }

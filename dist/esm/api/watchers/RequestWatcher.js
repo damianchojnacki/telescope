@@ -78,6 +78,7 @@ export default class RequestWatcher {
         return JSON.stringify(content, JSONFileSyncAdapter.getRefReplacer()).length > (1000 * RequestWatcher.responseSizeLimit) ? 'Purged By Telescope' : content;
     }
     save() {
+        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             const entry = new RequestWatcherEntry({
                 hostname: hostname(),
@@ -90,9 +91,10 @@ export default class RequestWatcher {
                 payload: this.getPayload(),
                 headers: this.request.headers,
                 response: this.responseBody,
-                user: this.getUser ? yield this.getUser(this.request) : undefined
+                user: this.getUser ? ((_a = yield this.getUser(this.request)) !== null && _a !== void 0 ? _a : undefined) : undefined,
+                controllerAction: this.controllerAction
             }, this.batchId);
-            DB.requests().save(entry);
+            yield DB.requests().save(entry);
         });
     }
     shouldIgnore() {

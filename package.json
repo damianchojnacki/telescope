@@ -36,6 +36,7 @@
   "dependencies": {
     "axios": "^0.27.2",
     "express": "^4.17.3",
+    "stack-utils": "^2.0.5",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
@@ -53,5 +54,8 @@
     "supertest": "^6.2.3",
     "ts-jest": "^27.1.4",
     "ts-node": "^10.7.0"
+  },
+  "optionalDependencies": {
+    "fsevents": "^2.3.2"
   }
 }

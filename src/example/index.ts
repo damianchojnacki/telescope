@@ -8,6 +8,7 @@ const port = process.env.PORT || 3000;
 const telescope = Telescope.setup(app)
 
 app.get('/', (request, response, next) => {
+    throw new Error('lol')
     response.send('Hello world')
 })
 

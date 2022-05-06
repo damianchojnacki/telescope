@@ -21,11 +21,10 @@ export default class ErrorWatcher {
     constructor(error: Error, batchId?: string);
     static setup(telescope: Telescope): void;
     private getSameError;
-    private saveOrUpdate;
+    saveOrUpdate(): Promise<void>;
     private isSameError;
-    private shouldIgnore;
-    private getFile;
-    private getLine;
+    shouldIgnore(): boolean;
+    private getFileInfo;
     private getLinePreview;
     private getStackTrace;
 }

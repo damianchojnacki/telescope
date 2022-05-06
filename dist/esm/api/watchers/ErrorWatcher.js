@@ -11,6 +11,7 @@ import DB from "../DB.js";
 import { existsSync, readFileSync } from "fs";
 import WatcherEntry, { WatcherEntryCollectionType, WatcherEntryDataType } from "../WatcherEntry.js";
 import { hostname } from "os";
+import StackUtils from "stack-utils";
 export class ErrorWatcherEntry extends WatcherEntry {
     constructor(data, batchId) {
         super(WatcherEntryDataType.exceptions, data, batchId);
@@ -63,10 +64,10 @@ export default class ErrorWatcher {
             const entry = new ErrorWatcherEntry({
                 hostname: hostname(),
                 class: this.error.name,
-                file: this.getFile(),
+                file: this.getFileInfo().file,
                 message: this.error.message,
                 trace: this.getStackTrace(),
-                line: this.getLine(),
+                line: this.getFileInfo().line,
                 line_preview: this.getLinePreview(),
                 occurrences: ((_a = error === null || error === void 0 ? void 0 : error.content.occurrences) !== null && _a !== void 0 ? _a : 0) + 1,
             }, this.batchId);
@@ -76,27 +77,26 @@ export default class ErrorWatcher {
     isSameError(error) {
         return error.content.class === this.error.name &&
             error.content.message === this.error.message &&
-            error.content.file === this.getFile();
+            error.content.file === this.getFileInfo().file;
     }
     shouldIgnore() {
         return ErrorWatcher.ignoreErrors.includes(this.error.constructor);
     }
-    getFile() {
-        var _a, _b, _c;
-        return (_c = ((_b = (_a = this.error.stack) === null || _a === void 0 ? void 0 : _a.split('\n')[1]) !== null && _b !== void 0 ? _b : '').split('at ')[1]) !== null && _c !== void 0 ? _c : '';
-    }
-    getLine() {
-        var _a, _b;
-        const line = ((_b = (_a = this.error.stack) === null || _a === void 0 ? void 0 : _a.split('\n')[1]) !== null && _b !== void 0 ? _b : '').split(':');
-        return Number(line[line.length - 2]);
+    getFileInfo() {
+        var _a, _b, _c, _d;
+        const utils = new StackUtils({ cwd: process.cwd(), internals: StackUtils.nodeInternals() });
+        const fileInfo = utils.parseLine(this.error.stack ? this.error.stack.split('\n')[1] : '');
+        return {
+            file: (_b = (_a = fileInfo === null || fileInfo === void 0 ? void 0 : fileInfo.file) === null || _a === void 0 ? void 0 : _a.replace('file://', '')) !== null && _b !== void 0 ? _b : '',
+            line: (_c = fileInfo === null || fileInfo === void 0 ? void 0 : fileInfo.line) !== null && _c !== void 0 ? _c : 0,
+            column: (_d = fileInfo === null || fileInfo === void 0 ? void 0 : fileInfo.column) !== null && _d !== void 0 ? _d : 0,
+        };
     }
     getLinePreview() {
-        var _a;
-        const path = (_a = this.getFile().replace('file://', '').split(':')[0]) !== null && _a !== void 0 ? _a : '';
+        const fileInfo = this.getFileInfo();
         const preview = {};
-        const errorLine = this.getLine();
-        path && existsSync(path) && readFileSync(path).toString().split('\n').forEach((line, index) => {
-            if (index > errorLine - 10 && index < errorLine + 10) {
+        fileInfo.file && existsSync(fileInfo.file) && readFileSync(fileInfo.file).toString().split('\n').forEach((line, index) => {
+            if (index > fileInfo.line - 10 && index < fileInfo.line + 10) {
                 preview[index + 1] = line;
             }
         });

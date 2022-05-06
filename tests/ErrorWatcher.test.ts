@@ -7,6 +7,7 @@ import DB from "../src/api/DB.js"
 import {hostname} from "os"
 import bodyParser from "body-parser"
 import ErrorWatcher from "../src/api/watchers/ErrorWatcher.js"
+import StackUtils from "stack-utils"
 
 describe('ErrorWatcher', () => {
     beforeEach(async () => {
@@ -33,11 +34,15 @@ describe('ErrorWatcher', () => {
 
         const entry = (await DB.errors().get())[0]
 
+        const utils = new StackUtils({cwd: process.cwd(), internals: StackUtils.nodeInternals()});
+
+        const fileInfo = utils.parseLine(error.stack ? error.stack.split('\n')[1] : '');
+
         expect(entry).not.toBeUndefined()
         expect(entry.type).toEqual('exception')
         expect(entry.content.hostname).toEqual(hostname())
         expect(entry.content.class).toEqual(error.constructor.name)
-        expect(entry.content.file).toEqual('/home/damian/Projekty/telescope/tests/ErrorWatcher.test.ts:23:23')
+        expect(entry.content.file).toEqual(fileInfo?.file?.replace('file://', '') ?? '')
         expect(entry.content.message).toEqual(error.message)
         expect(entry.content.occurrences).toEqual(1)
     })

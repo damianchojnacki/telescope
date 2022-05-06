@@ -15,7 +15,7 @@ export enum HTTPMethod
     DELETE = "DELETE",
 }
 
-export type GetUserFunction = (request: Request) => User
+export type GetUserFunction = (request: any) => User | Promise<User>
 
 export interface User
 {
@@ -61,9 +61,10 @@ export default class RequestWatcher
     private batchId?: string
     private request: Request
     private response: Response
-    private responseBody: any = ''
+    public responseBody: any = ''
     private startTime: [number, number]
     private getUser?: GetUserFunction
+    public controllerAction?: string
 
     constructor(request: Request, response: Response, batchId?: string, getUser?: GetUserFunction)
     {
@@ -145,7 +146,7 @@ export default class RequestWatcher
         return JSON.stringify(content, JSONFileSyncAdapter.getRefReplacer()).length > (1000 * RequestWatcher.responseSizeLimit) ? 'Purged By Telescope' : content
     }
 
-    private async save()
+    public async save()
     {
         const entry = new RequestWatcherEntry({
             hostname: hostname(),
@@ -158,13 +159,14 @@ export default class RequestWatcher
             payload: this.getPayload(),
             headers: this.request.headers,
             response: this.responseBody,
-            user: this.getUser ? await this.getUser(this.request) : undefined
+            user: this.getUser ? (await this.getUser(this.request) ?? undefined) : undefined,
+            controllerAction: this.controllerAction
         }, this.batchId)
 
-        DB.requests().save(entry)
+        await DB.requests().save(entry)
     }
 
-    private shouldIgnore(): boolean
+    public shouldIgnore(): boolean
     {
         const checks = RequestWatcher.ignorePaths.map((path) => {
             return path.endsWith('*') ? this.request.path.startsWith(path.slice(0, -1)) : this.request.path === path

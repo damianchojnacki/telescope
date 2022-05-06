@@ -23,9 +23,9 @@ export default class Telescope {
     batchId?: string;
     constructor(app: Express);
     static setup(app: Express, options?: TelescopeOptions): Telescope;
-    private static config;
+    static config(options: TelescopeOptions): void;
     private static isAuthorized;
-    getEnabledWatchers(): string[];
+    static getEnabledWatchers(): string[];
     private setUpApi;
     private resolveDir;
     private setUpStaticFiles;

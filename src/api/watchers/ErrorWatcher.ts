@@ -4,6 +4,7 @@ import {existsSync, readFileSync} from "fs"
 import WatcherEntry, {WatcherEntryCollectionType, WatcherEntryDataType} from "../WatcherEntry.js"
 import Telescope from "../Telescope.js"
 import {hostname} from "os"
+import StackUtils from "stack-utils"
 
 export interface ErrorWatcherData
 {
@@ -86,17 +87,17 @@ export default class ErrorWatcher
         return {error, index}
     }
 
-    private async saveOrUpdate()
+    public async saveOrUpdate()
     {
         const {error, index} = await this.getSameError()
 
         const entry = new ErrorWatcherEntry({
             hostname: hostname(),
             class: this.error.name,
-            file: this.getFile(),
+            file: this.getFileInfo().file,
             message: this.error.message,
             trace: this.getStackTrace(),
-            line: this.getLine(),
+            line: this.getFileInfo().line,
             line_preview: this.getLinePreview(),
             occurrences: (error?.content.occurrences ?? 0) + 1,
         }, this.batchId)
@@ -108,36 +109,35 @@ export default class ErrorWatcher
     {
         return error.content.class === this.error.name &&
             error.content.message === this.error.message &&
-            error.content.file === this.getFile()
+            error.content.file === this.getFileInfo().file
     }
 
-    private shouldIgnore(): boolean
+    public shouldIgnore(): boolean
     {
         return ErrorWatcher.ignoreErrors.includes(this.error.constructor as ErrorConstructor)
     }
 
-    private getFile(): string
+    private getFileInfo()
     {
-        return (this.error.stack?.split('\n')[1] ?? '').split('at ')[1] ?? ''
-    }
+        const utils = new StackUtils({cwd: process.cwd(), internals: StackUtils.nodeInternals()});
 
-    private getLine(): number
-    {
-        const line = (this.error.stack?.split('\n')[1] ?? '').split(':')
+        const fileInfo = utils.parseLine(this.error.stack ? this.error.stack.split('\n')[1] : '');
 
-        return Number(line[line.length - 2])
+        return {
+            file: fileInfo?.file?.replace('file://', '') ?? '',
+            line: fileInfo?.line ?? 0,
+            column: fileInfo?.column ?? 0,
+        }
     }
 
     private getLinePreview(): string[]
     {
-        const path = this.getFile().replace('file://', '').split(':')[0] ?? ''
+        const fileInfo = this.getFileInfo()
 
         const preview: any = {}
 
-        const errorLine = this.getLine()
-
-        path && existsSync(path) && readFileSync(path).toString().split('\n').forEach((line, index) => {
-            if (index > errorLine - 10 && index < errorLine + 10) {
+        fileInfo.file && existsSync(fileInfo.file) && readFileSync(fileInfo.file).toString().split('\n').forEach((line, index) => {
+            if (index > fileInfo.line - 10 && index < fileInfo.line + 10) {
                 preview[index + 1] = line
             }
         })
