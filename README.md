@@ -4,8 +4,8 @@
     <img src="https://img.shields.io/badge/express-%3E%3D%204.0.0-blue" alt="Express version >= 4.0.0"/>
     <img src="https://img.shields.io/badge/license-MIT-brightgreen" alt="License MIT"/>
     <img src="https://img.shields.io/npm/dm/@damianchojnacki/telescope" alt="Downloads"/>
+    <img src="https://img.shields.io/github/workflow/status/damianchojnacki/telescope/Node.js%20CI" alt="Build"/>
 </p>
-
 
 ## Introduction
 Node.js Telescope is an elegant debug assistant based on Telescope for Laravel framework. 
