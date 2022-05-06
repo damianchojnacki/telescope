@@ -1,7 +1,10 @@
-# Node.js Telescope
+<p align="center"><img src="https://raw.githubusercontent.com/damianchojnacki/damianchojnacki/main/telescope.svg" alt="Telescope logo"/></p>
 
-![Express version >= 4.0.0](https://img.shields.io/badge/express-%3E%3D%204.0.0-blue)
-![MIT License](https://img.shields.io/badge/license-MIT-brightgreen)
+<p align="center">
+    <img src="https://img.shields.io/badge/express-%3E%3D%204.0.0-blue" alt="Express version >= 4.0.0"/>
+    <img src="https://img.shields.io/badge/license-MIT-brightgreen" alt="License MIT"/>
+    <img src="https://img.shields.io/npm/dm/@damianchojnacki/telescope" alt="Downloads"/>
+</p>
 
 
 ## Introduction
