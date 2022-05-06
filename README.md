@@ -1,15 +1,17 @@
-# Node.js Telescope
+<p align="center"><img src="https://raw.githubusercontent.com/damianchojnacki/damianchojnacki/main/telescope.svg" alt="Telescope logo"/></p>
 
-![Express version >= 4.0.0](https://img.shields.io/badge/express-%3E%3D%204.0.0-blue)
-![MIT License](https://img.shields.io/badge/license-MIT-brightgreen)
+<p align="center">
+    <img src="https://img.shields.io/badge/express-%3E%3D%204.0.0-blue" alt="Express version >= 4.0.0"/>
+    <img src="https://img.shields.io/badge/license-MIT-brightgreen" alt="License MIT"/>
+    <img src="https://img.shields.io/npm/dm/@damianchojnacki/telescope" alt="Downloads"/>
+</p>
 
 
 ## Introduction
 Node.js Telescope is an elegant debug assistant based on Telescope for Laravel framework. 
 Telescope provides insight into the requests coming into your application, 
-exceptions, log entries, database queries, queued jobs, mail, notifications, 
-cache operations, scheduled tasks, variable dumps and more. Telescope makes a 
-wonderful companion to your local Laravel development environment.
+exceptions, console.log entries, variable dumps and more. Telescope makes a 
+wonderful companion to your local development environment.
 
 ### [Laravel Telescope](https://github.com/laravel/telescope)
 
@@ -38,6 +40,8 @@ app.get('/', (request, response) => {
 
 ErrorWatcher.setup(telescope)
 ```
+
+Now you can access telescope panel at `/telescope`.
 
 #### RequestWatcher
 
